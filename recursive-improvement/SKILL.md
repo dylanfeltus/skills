@@ -45,30 +45,26 @@ If it survives, ship it. If not, iterate.
 
 ---
 
-## Agent-Specific Criteria
+## Example Criteria by Use Case
 
-### Buzz (Content/Social)
-
-**Minimum threshold: 8/10 for each**
+### Social Content
 
 | Criterion | What to evaluate |
 |-----------|-----------------|
 | **Hook strength** | First line grabs attention? Pattern interrupt? |
 | **Curiosity gap** | Creates urge to keep reading? |
 | **Clarity** | One clear idea? No confusion? |
-| **Voice match** | Sounds like the target voice profile? |
-| **Engagement bait** | People will reply/share/save? |
+| **Voice match** | Sounds like the target voice/brand? |
+| **Engagement potential** | People will reply/share/save? |
 | **Thumb-stop power** | Scroller would pause? |
 | **Value density** | Every line earns its place? |
 | **CTA clarity** | Clear what reader should do next? |
 
-**Adversarial test:** Show to a distracted, skeptical Twitter user at 11pm. Would they engage?
+**Adversarial test:** Would a distracted, skeptical user at 11pm engage with this?
 
 ---
 
-### Kai (Web Copy)
-
-**Minimum threshold: 8/10 for each**
+### Landing Page / Web Copy
 
 | Criterion | What to evaluate |
 |-----------|-----------------|
@@ -79,9 +75,43 @@ If it survives, ship it. If not, iterate.
 | **Trust signals** | Credibility established? Social proof? |
 | **Readability** | Scannable? Short paragraphs? Clear hierarchy? |
 | **Objection handling** | Common concerns addressed? |
-| **Local relevance** | Location/community connection clear? |
+| **Specificity** | Concrete details vs vague claims? |
 
-**Adversarial test:** Show to a local business owner searching on their phone. Would they call/click within 30 seconds?
+**Adversarial test:** Would someone searching on their phone take action within 30 seconds?
+
+---
+
+### Email Copy
+
+| Criterion | What to evaluate |
+|-----------|-----------------|
+| **Subject line** | Would this get opened? Stands out in inbox? |
+| **Opening hook** | First sentence earns the second? |
+| **Single focus** | One clear ask per email? |
+| **Skimmability** | Can get the gist in 5 seconds? |
+| **CTA prominence** | Action is obvious and easy? |
+| **Voice consistency** | Matches brand/sender personality? |
+| **Length appropriate** | No fluff, nothing missing? |
+| **Mobile friendly** | Works on small screens? |
+
+**Adversarial test:** Would a busy person with 200 unread emails act on this?
+
+---
+
+### Ad Copy
+
+| Criterion | What to evaluate |
+|-----------|-----------------|
+| **Thumb-stop power** | Pattern interrupt in first 2 seconds? |
+| **Curiosity gap** | Creates need to know more? |
+| **Emotional trigger** | Hits a real pain point or desire? |
+| **Credibility** | Believable? Not too good to be true? |
+| **CTA strength** | Clear next step with low friction? |
+| **Persona match** | Speaks directly to target audience? |
+| **Differentiation** | Stands out from competitor ads? |
+| **Platform native** | Fits the platform's style/format? |
+
+**Adversarial test:** Would this stop YOUR scroll? Would you click?
 
 ---
 
@@ -92,13 +122,24 @@ If it survives, ship it. If not, iterate.
 - CTAs and value props
 - Key landing page sections
 - Social posts (especially threads)
-- Any "hero" content
+- Ad copy
+- Important emails
 
 **Can skip for:**
 - Internal notes
 - First-pass brainstorming
 - Technical documentation
 - Boilerplate content
+
+---
+
+## Building Your Own Criteria
+
+1. **Pick one task** you do repeatedly
+2. **Write down how YOU evaluate** that output — what makes "good" vs "mid"?
+3. **Turn each into a pass/fail threshold** — be specific ("9/10 minimum" not "make it good")
+4. **Add adversarial pressure** — who would attack this? What would they say?
+5. **Save and reuse** — now you have a system, not just a prompt
 
 ---
 
@@ -112,7 +153,7 @@ If it survives, ship it. If not, iterate.
 - Hook strength: 6/10 — Opens weak, no pattern interrupt
 - Clarity: 8/10 — Clear enough
 - Voice match: 7/10 — Too formal
-[... all criteria]
+[... score all criteria]
 
 ## Diagnosis
 1. Hook needs a surprising stat or contrarian take
@@ -128,9 +169,4 @@ If it survives, ship it. If not, iterate.
 
 ---
 
-## Integration
-
-- **Buzz:** Run loop on all drafts before marking "ready for review"
-- **Kai:** Run loop on homepage hero, about section, and CTAs before build is "complete"
-
-The loop adds ~2-3 iterations. Worth it for quality.
+The loop typically adds 2-3 iterations. Worth it for anything that matters.
