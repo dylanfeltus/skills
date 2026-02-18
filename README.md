@@ -1,6 +1,6 @@
 # Skills Library
 
-A collection of reusable AI agent skills for research, intelligence gathering, and content creation. Drop a folder into your agent's skills directory and it just works.
+A collection of reusable AI agent skills for research, intelligence gathering, design, and content creation. Drop a folder into your agent's skills directory and it just works.
 
 ## What are skills?
 
@@ -16,6 +16,15 @@ Skills are structured instructions that give AI agents domain expertise and syst
 | [producthunt](./producthunt/) | Search Product Hunt launches via GraphQL V2 API | ✅ Free dev token (~2 min setup) |
 | [appstore-intel](./appstore-intel/) | App Store ratings, reviews, and metadata (iOS + Android) | ❌ Free, no key |
 | [trademark-search](./trademark-search/) | USPTO trademark availability search | ❌ Free, no key |
+
+### Design
+
+| Skill | Description | Auth Required |
+|-------|-------------|---------------|
+| [motion-design-patterns](./motion-design-patterns/) | Framer Motion patterns — springs, staggers, layout animations, micro-interactions | ❌ None |
+| [design-tokens](./design-tokens/) | Type scales, color palettes, spacing grids, WCAG contrast, dark mode derivation | ❌ None |
+| [creative-direction](./creative-direction/) | Image prompt templates, model selection, anti-generic patterns | ❌ None |
+| [visual-qa](./visual-qa/) | Screenshot review against design intent using vision models | ❌ None |
 
 ### Content & Quality
 
