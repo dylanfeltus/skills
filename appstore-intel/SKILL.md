@@ -101,7 +101,7 @@ Each result contains:
   "trackViewUrl": "https://apps.apple.com/us/app/...",
   "artworkUrl512": "https://is1-ssl.mzstatic.com/...",
   "screenshotUrls": ["url1", "url2"],
-  "supportedDevices": ["iPhone15,2", "iPad14,1"],
+  "supportedDevices": ["iPhone15,2", "iPad14,1"],  // ⚠️ Can be 100+ items — omit from output to save context
   "languageCodesISO2A": ["EN", "FR", "DE"]
 }
 ```
