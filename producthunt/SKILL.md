@@ -12,16 +12,26 @@ Search for products, track launches, and monitor Product Hunt activity via the G
 
 ## Requirements
 
-**API Token Required.** The Product Hunt API requires authentication.
+**API Token Required.** The Product Hunt API requires authentication — but it's **free and takes ~2 minutes** to set up.
 
 ### Getting a Token
 
 1. Go to [API Dashboard](https://www.producthunt.com/v2/oauth/applications)
-2. Create an application
+2. Create an application (any name/URL works)
 3. Use the **Developer Token** at the bottom of your app's page (no OAuth flow needed for read-only access)
 4. Store the token in an environment variable: `PH_API_TOKEN`
 
 If no token is available, fall back to using `web_search` with `site:producthunt.com` queries.
+
+## Key Limitation: No Text Search
+
+The Product Hunt API **does not support free-text search on posts**. You can browse by topic, date, or get a specific post by slug — but you cannot search "AI writing tool" and get matching products.
+
+**To find a product by name**, use `web_search` first:
+```
+web_search: site:producthunt.com/posts "product name"
+```
+Then use the slug from the result to query the API for full details (votes, comments, makers, etc.).
 
 ## API Overview
 
