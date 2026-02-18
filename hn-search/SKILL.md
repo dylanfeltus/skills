@@ -75,18 +75,15 @@ Combine with commas: `numericFilters=points>100,num_comments>50`
 
 To search within a time window, use Unix timestamps with `created_at_i`:
 
-```
-# Last 24 hours
-numericFilters=created_at_i>$(( $(date +%s) - 86400 ))
+Calculate the current Unix timestamp first (e.g., via `exec: date +%s`), then subtract:
 
-# Last 7 days
-numericFilters=created_at_i>$(( $(date +%s) - 604800 ))
+| Window | Subtract from now |
+|--------|------------------|
+| Last 24 hours | `- 86400` |
+| Last 7 days | `- 604800` |
+| Last 30 days | `- 2592000` |
 
-# Last 30 days
-numericFilters=created_at_i>$(( $(date +%s) - 2592000 ))
-```
-
-When constructing URLs, calculate the Unix timestamp first, then embed it.
+Example: if now is `1705312200`, last 7 days = `numericFilters=created_at_i>1704707400`
 
 ## Response Format
 
@@ -174,10 +171,10 @@ Present results as a clean list:
 ```
 ### HN Results for "query" (N total)
 
-1. **Story Title** (points pts, comments comments)
-   By author · date
-   🔗 original_url
-   💬 hn_link
+1. **Story Title** (150 pts, 42 comments)
+   By username · Jan 15, 2024
+   🔗 https://example.com/article
+   💬 https://news.ycombinator.com/item?id=12345
 
 2. ...
 ```
@@ -186,9 +183,9 @@ For comments:
 ```
 ### HN Comments on "Story Title"
 
-1. **author** (points pts) · date
-   > Comment text (first ~200 chars)
-   💬 hn_link
+1. **username** (12 pts) · Jan 15, 2024
+   > First ~200 chars of the comment text...
+   💬 https://news.ycombinator.com/item?id=12345
 ```
 
 ## Error Handling

@@ -86,7 +86,7 @@ query {
 }
 ```
 
-### Search for a Product by Name
+### Browse Posts by Topic
 
 ```graphql
 query {
@@ -105,7 +105,7 @@ query {
 }
 ```
 
-Note: The API doesn't have a direct text search on posts. To search by name, use `web_search` with `site:producthunt.com/posts "product name"`, then look up specific posts by slug or ID.
+**Remember:** This browses a topic — it's not a text search. To find a specific product by name, use `web_search` with `site:producthunt.com/posts "product name"`, then look up the post by slug via the API.
 
 ### Get a Specific Post
 

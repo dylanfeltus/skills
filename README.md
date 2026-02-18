@@ -1,27 +1,37 @@
 # Skills Library
 
-A collection of reusable AI agent skills for marketing, content creation, and web development.
+A collection of reusable AI agent skills for research, intelligence gathering, and content creation. Drop a folder into your agent's skills directory and it just works.
 
 ## What are skills?
 
-Skills are structured instructions that give AI agents (Claude, GPT, etc.) domain expertise and systematic workflows. Instead of prompting from scratch, you load a skill and get consistent, high-quality output.
+Skills are structured instructions that give AI agents domain expertise and systematic workflows. Instead of prompting from scratch, you load a skill and get consistent, high-quality output. Works with OpenClaw, Claude Code, Cursor, and other LLM-based tools.
 
 ## Available Skills
 
-### [recursive-improvement](./recursive-improvement/SKILL.md)
-A pattern for generating higher-quality output by iterating against explicit scoring criteria. Generate → Evaluate → Diagnose → Improve → Repeat until it passes.
+### Research & Intelligence
 
-**Use for:** Headlines, CTAs, landing page copy, social content, ad copy — anything where quality matters.
+| Skill | Description | Auth Required |
+|-------|-------------|---------------|
+| [hn-search](./hn-search/) | Search & monitor Hacker News via the Algolia API | ❌ Free, no key |
+| [producthunt](./producthunt/) | Search Product Hunt launches via GraphQL V2 API | ✅ Free dev token (~2 min setup) |
+| [appstore-intel](./appstore-intel/) | App Store ratings, reviews, and metadata (iOS + Android) | ❌ Free, no key |
+| [trademark-search](./trademark-search/) | USPTO trademark availability search | ❌ Free, no key |
 
----
+### Content & Quality
+
+| Skill | Description | Auth Required |
+|-------|-------------|---------------|
+| [recursive-improvement](./recursive-improvement/) | Generate → Evaluate → Improve loop for higher-quality output | ❌ None |
 
 ## How to Use
 
-1. Copy the skill's `SKILL.md` into your AI's context
-2. Reference it in your system prompt or project instructions
-3. The AI will follow the workflow and criteria defined in the skill
+1. Copy the skill folder into your agent's skills directory
+2. Reference the `SKILL.md` in your system prompt or project instructions
+3. The agent follows the workflow and instructions defined in the skill
 
-Works with Claude (via Claude Code, Cursor, etc.), ChatGPT, and other LLM-based tools.
+Each skill includes:
+- `SKILL.md` — Full instructions the agent reads (trigger conditions, API details, error handling, output format)
+- `README.md` — Human-facing docs
 
 ## Contributing
 
@@ -29,4 +39,4 @@ More skills coming soon. Follow [@dylanfeltus](https://twitter.com/dylanfeltus) 
 
 ---
 
-*Built by [Dylan Feltus](https://twitter.com/dylanfeltus) and the Mission Control AI team.*
+*Built by [Stratus Labs](https://twitter.com/dylanfeltus)*

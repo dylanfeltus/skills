@@ -100,7 +100,7 @@ Each result contains:
   "minimumOsVersion": "15.0",
   "trackViewUrl": "https://apps.apple.com/us/app/...",
   "artworkUrl512": "https://is1-ssl.mzstatic.com/...",
-  "screenshotUrls": ["url1", "url2"],
+  "screenshotUrls": ["url1", "url2"],  // ⚠️ Can be 10+ URLs — summarize count, don't dump all
   "supportedDevices": ["iPhone15,2", "iPad14,1"],  // ⚠️ Can be 100+ items — omit from output to save context
   "languageCodesISO2A": ["EN", "FR", "DE"]
 }
@@ -130,7 +130,9 @@ web_search: "site:play.google.com/store/apps QUERY"
 web_fetch: https://play.google.com/store/apps/details?id=PACKAGE_ID&hl=en&gl=us
 ```
 
-Extract from the fetched HTML:
+⚠️ **Google Play pages may return limited content or block automated requests.** If `web_fetch` returns incomplete data, fall back to `web_search` results which typically include rating, download count, and developer info in the snippet.
+
+Extract from the fetched HTML (when available):
 - Title, developer, rating, review count, downloads
 - Description, what's new, screenshots
 
