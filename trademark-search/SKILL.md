@@ -1,6 +1,6 @@
 # USPTO Trademark Search
 
-Search the United States Patent and Trademark Office (USPTO) database to check trademark availability and get registration details. Uses a combination of the USPTO's TSDR API and web search for comprehensive results.
+Search the United States Patent and Trademark Office (USPTO) database to check trademark availability and get registration details. Uses web search as the primary method — most USPTO and trademark database sites block automated requests.
 
 ## When to Use
 
@@ -13,81 +13,70 @@ Search the United States Patent and Trademark Office (USPTO) database to check t
 
 **This skill provides informational data only — not legal advice.** Always recommend the user consult a trademark attorney for definitive guidance. Trademark availability depends on many factors beyond exact-match searches (similarity, likelihood of confusion, goods/services classes, etc.).
 
-## Approach
+## Known Limitations
 
-There is no free public full-text trademark search API. The strategy is:
+Direct `web_fetch` calls to trademark databases **will not work** — they block automated requests:
 
-1. **Web search** for initial trademark discovery (fast, broad)
-2. **USPTO Trademark Search** (tmsearch.uspto.gov) for official records via web scraping
-3. **TSDR API** for detailed status on known serial/registration numbers (requires free API key)
+| Source | Direct Fetch | Status |
+|--------|-------------|--------|
+| tmsearch.uspto.gov | ❌ JS-rendered, no useful content | Blocked |
+| tsdr.uspto.gov | ❌ Returns 403 | Blocked |
+| trademarkia.com | ❌ Returns 403 | Blocked |
+| branddb.wipo.int | ❌ JS-rendered | Blocked |
 
-## Step 1: Web Search for Trademark Info
+**Web search is the primary (and reliable) approach.** Search engines index these databases, so you can find trademark records through `web_search` queries with `site:` filters.
 
-Use `web_search` to quickly check if a name has trademark registrations:
+## Step 1: Web Search for Trademark Records (Primary Method)
+
+Use `web_search` to find trademark registrations. This is the most reliable approach.
+
+### Search USPTO Records
 
 ```
-web_search: "BRAND_NAME" trademark USPTO site:uspto.gov
+web_search: "BRAND_NAME" trademark site:tsdr.uspto.gov
 ```
 
-Also search more broadly:
+```
+web_search: "BRAND_NAME" trademark site:uspto.gov
+```
+
+### Search Trademarkia (Indexed by Search Engines)
+
+```
+web_search: "BRAND_NAME" site:trademarkia.com
+```
+
+Trademarkia results typically include: mark name, serial/registration number, status (LIVE/DEAD), owner, filing date, and Nice Classification class.
+
+### Search Broadly
 
 ```
 web_search: "BRAND_NAME" trademark registered
 ```
 
 ```
-web_search: "BRAND_NAME" site:trademarkia.com
-```
-
-```
 web_search: "BRAND_NAME" site:tmdn.org
 ```
 
-### What to Look For
+### What to Look For in Results
 
-- Results from `tsdr.uspto.gov` or `tmsearch.uspto.gov` → existing trademark record
-- Results from `trademarkia.com` → trademark database with status info
-- Company websites claiming "® " or "™" → claimed/registered marks
-- The Nice Classification class for goods/services
+- **TSDR links** (tsdr.uspto.gov/statusview/sn... or rn...) → existing trademark record with serial/registration number
+- **Trademarkia listings** → status, owner, class, filing/registration dates
+- **Company websites** claiming "®" or "™" → claimed/registered marks
+- **Nice Classification class** for goods/services — critical for determining if a mark conflicts with your intended use
 
-## Step 2: USPTO Trademark Search (tmsearch.uspto.gov)
+## Step 2: Extract Details from Search Results
 
-The new USPTO trademark search system is at `https://tmsearch.uspto.gov/`.
+Search results from Trademarkia and USPTO typically contain enough detail in the snippet:
 
-To search it programmatically, try fetching search results:
+- **Mark name** and any design description
+- **Serial number** (application) or **Registration number**
+- **Status:** LIVE (active) or DEAD (abandoned/cancelled/expired)
+- **Owner name**
+- **Class(es)** of goods/services
+- **Filing and registration dates**
 
-```
-web_fetch: https://tmsearch.uspto.gov/search/search-results?query=BRAND_NAME&section=all
-```
-
-If the page is JS-rendered and doesn't return useful content, fall back to web search with:
-
-```
-web_search: site:tmsearch.uspto.gov "BRAND_NAME"
-```
-
-## Step 3: TSDR API for Status Details
-
-Once you have a **serial number** or **registration number** from Step 1 or 2, use the TSDR API for detailed status.
-
-### TSDR Status API
-
-```
-web_fetch: https://tsdr.uspto.gov/statusview/sn{SERIAL_NUMBER}
-```
-
-Or by registration number:
-
-```
-web_fetch: https://tsdr.uspto.gov/statusview/rn{REGISTRATION_NUMBER}
-```
-
-### TSDR XML Data (if API key available)
-
-```bash
-curl -s "https://tsdr.uspto.gov/documentviewer/sn{SERIAL_NUMBER}/XML" \
-  -H "USPTO-API-KEY: $USPTO_API_KEY"
-```
+If you need more detail, try fetching the specific Trademarkia result URL — some individual pages may load, though the search pages are blocked.
 
 ### Key Status Values
 
@@ -101,28 +90,16 @@ curl -s "https://tsdr.uspto.gov/documentviewer/sn{SERIAL_NUMBER}/XML" \
 | **Cancelled** | Registration was cancelled |
 | **Expired** | Registration expired (not renewed) |
 
-## Step 4: Check Third-Party Databases
+## Step 3: Check International Marks (Optional)
 
-For more comprehensive searching, also check:
-
-### Trademarkia
+For products with international reach, also search:
 
 ```
-web_fetch: https://www.trademarkia.com/trademarks-search.aspx?tn=BRAND_NAME
+web_search: "BRAND_NAME" trademark site:branddb.wipo.int
 ```
 
-Trademarkia provides a user-friendly view of USPTO records plus international marks.
-
-### WIPO Global Brand Database (International)
-
 ```
-web_search: "BRAND_NAME" site:branddb.wipo.int
-```
-
-Or direct search:
-
-```
-web_fetch: https://branddb.wipo.int/branddb/en/#tabs_1_2
+web_search: "BRAND_NAME" trademark international WIPO
 ```
 
 ## Trademark Classes (Nice Classification)
@@ -134,6 +111,7 @@ When reporting results, include the goods/services class:
 | 9 | Software, apps, electronics |
 | 25 | Clothing, footwear |
 | 35 | Advertising, business management |
+| 36 | Financial services, insurance |
 | 41 | Education, entertainment |
 | 42 | Software design, SaaS, tech services |
 
@@ -190,10 +168,9 @@ A trademark only protects within its registered class(es). A name can be registe
 
 ## Error Handling
 
-- **No results from web search:** This doesn't mean the name is available — it may not be indexed yet. Note this uncertainty.
-- **TSDR page unavailable:** The USPTO site has maintenance windows (usually weekends). Try again later.
-- **JS-rendered pages:** Fall back to `web_search` with `site:` prefixes.
-- **API key missing:** Skip the TSDR XML endpoint. The web-based status view and web search provide sufficient information for most queries.
+- **No results from web search:** This doesn't mean the name is available — it may not be indexed yet, or it may be too new. Note this uncertainty.
+- **Conflicting info across sources:** Trademarkia may lag behind USPTO. When in doubt, note the discrepancy and recommend checking the official USPTO site directly.
+- **Too many results:** Narrow with class filters or add the specific goods/services category to the search query.
 
 ## Important Caveats to Always Mention
 
@@ -208,25 +185,27 @@ A trademark only protects within its registered class(es). A name can be registe
 
 ### Example 1: "Is 'Stellar' trademarked?"
 
-1. `web_search: "Stellar" trademark USPTO`
+1. `web_search: "Stellar" trademark site:tsdr.uspto.gov`
 2. `web_search: "Stellar" site:trademarkia.com`
-3. Review results, find serial/registration numbers
-4. Look up status via TSDR for each match
-5. Present findings with class info and assessment
+3. Review search result snippets for serial/registration numbers, status, class
+4. Present findings with class info and assessment
 
 ### Example 2: "Can I use 'NovaPay' for a fintech app?"
 
 1. `web_search: "NovaPay" trademark`
 2. `web_search: "NovaPay" site:trademarkia.com`
-3. Check for marks in Class 9 (software) and Class 36 (financial services)
+3. Check results for marks in Class 9 (software) and Class 36 (financial services)
 4. Present findings and note relevant classes for fintech
 
 ### Example 3: "Check trademark status for registration number 5678901"
 
-1. `web_fetch: https://tsdr.uspto.gov/statusview/rn5678901`
-2. Present the current status, owner, and class information
+1. `web_search: USPTO trademark registration 5678901`
+2. Look for TSDR or Trademarkia links in results with status details
+3. Present the current status, owner, and class information
 
 ## Data Sources
+
+All accessed via `web_search` (direct fetch is blocked by these sites):
 
 - **USPTO Trademark Search:** [tmsearch.uspto.gov](https://tmsearch.uspto.gov/) — Official US trademark database
 - **USPTO TSDR:** [tsdr.uspto.gov](https://tsdr.uspto.gov/) — Status and document retrieval
