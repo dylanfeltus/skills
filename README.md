@@ -39,4 +39,4 @@ More skills coming soon. Follow [@dylanfeltus](https://twitter.com/dylanfeltus) 
 
 ---
 
-*Built by [Stratus Labs](https://twitter.com/dylanfeltus)*
+*Built by [Stratus Labs](https://stratuslabs.io)*
