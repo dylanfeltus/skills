@@ -121,7 +121,7 @@ Every palette needs:
 
 | Token | Purpose | Example |
 |-------|---------|---------|
-| `primary` | Main brand color, CTAs | Blue, purple, etc. |
+| `primary` | Main brand color, CTAs | Your brand color |
 | `neutral` | Text, borders, backgrounds | Gray (warm/cool/pure) |
 | `success` | Positive states | Green |
 | `warning` | Caution states | Amber/yellow |
