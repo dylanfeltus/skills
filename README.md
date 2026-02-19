@@ -32,7 +32,21 @@ Skills are structured instructions that give AI agents domain expertise and syst
 |-------|-------------|---------------|
 | [recursive-improvement](./recursive-improvement/) | Generate → Evaluate → Improve loop for higher-quality output | ❌ None |
 
-## How to Use
+## Install
+
+### Via npx (recommended)
+
+```bash
+# Install all skills
+npx skills add dylanfeltus/skills
+
+# Install a specific skill
+npx skills add dylanfeltus/skills --skill visual-qa
+```
+
+Auto-detects your agent (Claude Code, OpenClaw, Codex, Cursor, etc.)
+
+### Manual
 
 1. Copy the skill folder into your agent's skills directory
 2. Reference the `SKILL.md` in your system prompt or project instructions
