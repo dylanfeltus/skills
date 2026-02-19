@@ -1,3 +1,8 @@
+---
+name: creative-direction
+description: Image prompt templates, model selection guidance, and anti-generic patterns for generating visual assets. Use when the user needs AI-generated images for landing pages, marketing, or products. Covers hero images, feature illustrations, OG cards, icons, and backgrounds.
+---
+
 # Creative Direction
 
 Image prompt templates, model selection guidance, and anti-generic patterns for generating visual assets. Covers hero images, feature illustrations, testimonial photos, OG images, and more.

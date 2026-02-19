@@ -1,3 +1,8 @@
+---
+name: trademark-search
+description: Search the USPTO trademark database to check name availability and get registration details. Use when the user wants to check if a name is trademarked, research trademark availability, or look up registration status. No API key required.
+---
+
 # USPTO Trademark Search
 
 Search the United States Patent and Trademark Office (USPTO) database to check trademark availability and get registration details. Uses web search as the primary method — most USPTO and trademark database sites block automated requests.

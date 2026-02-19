@@ -1,3 +1,8 @@
+---
+name: appstore-intel
+description: Look up app details, ratings, reviews, and search the iOS App Store, Mac App Store, and Google Play. Use when the user asks about app ratings, wants to compare apps, or research a competitor's app store presence. No API key required.
+---
+
 # App Store Intelligence
 
 Look up app details, ratings, reviews, and search the iOS App Store and Mac App Store using Apple's free iTunes Search & Lookup APIs. No API key required.

@@ -1,3 +1,8 @@
+---
+name: hn-search
+description: Search and monitor Hacker News stories, comments, and users via the free Algolia API. Use when the user asks about HN discussions, wants to find posts about a topic, or monitor HN for mentions. No API key required.
+---
+
 # Hacker News Search
 
 Search and monitor Hacker News stories, comments, and users via the Algolia HN Search API. No API key required.

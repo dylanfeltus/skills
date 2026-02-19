@@ -1,3 +1,8 @@
+---
+name: producthunt
+description: Search Product Hunt launches, products, and makers via the GraphQL V2 API. Use when the user asks about Product Hunt launches, trending products, or wants to research a product's reception. Requires a free developer token (~2 min setup).
+---
+
 # Product Hunt Search & Monitoring
 
 Search for products, track launches, and monitor Product Hunt activity via the GraphQL V2 API.

@@ -1,3 +1,8 @@
+---
+name: visual-qa
+description: Use vision models to self-review screenshots against design intent. Catches spacing issues, alignment problems, color inconsistencies, responsive bugs, and accessibility gaps. Use when reviewing designs, comparing implementations to mockups, or doing pre-ship QA.
+---
+
 # Visual QA
 
 Use vision models to self-review screenshots against design intent. Catch spacing issues, alignment problems, color inconsistencies, responsive bugs, and accessibility gaps before shipping.

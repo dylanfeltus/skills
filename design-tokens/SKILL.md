@@ -1,3 +1,8 @@
+---
+name: design-tokens
+description: Generate type scales, color palettes, spacing systems, WCAG contrast checks, and dark mode derivations with math. Use when setting up a design system, creating tokens, or building a Tailwind/CSS theme. Outputs CSS custom properties, Tailwind config, or JSON tokens.
+---
+
 # Design Tokens
 
 Generate type scales, color palettes, spacing systems, and dark mode derivations with math — not guessing. Includes WCAG contrast checking, systematic spacing grids, and production-ready CSS/Tailwind output.

@@ -1,3 +1,8 @@
+---
+name: motion-design-patterns
+description: Framer Motion (Motion) animation patterns for React — springs, staggers, layout animations, micro-interactions, scroll effects, and page transitions. Use when building or improving UI animations, adding polish, or making interfaces feel premium.
+---
+
 # Motion Design Patterns
 
 Framer Motion (Motion) patterns for React — springs, staggers, layout animations, micro-interactions, scroll-triggered effects, and exit animations. The #1 differentiator between generic and polished UI.

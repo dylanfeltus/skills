@@ -1,3 +1,8 @@
+---
+name: recursive-improvement
+description: A pattern for generating higher-quality output by iterating against explicit scoring criteria. Use for headlines, CTAs, landing page copy, social content, ad copy — anything where quality matters. Generate → Evaluate → Diagnose → Improve → Repeat.
+---
+
 # Recursive Self-Improvement Loop
 
 A pattern for generating higher-quality output by iterating against explicit scoring criteria.
