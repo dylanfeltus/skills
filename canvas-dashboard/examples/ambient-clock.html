@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ambient Clock</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes fadeIn  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-8px); } }
+
+  body {
+    height: 100vh; width: 100vw; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e, #0f0c29);
+    background-size: 400% 400%;
+    animation: gradientShift 120s ease infinite;
+    color: #e0e0e0;
+  }
+
+  #time {
+    font-size: clamp(6rem, 14vw, 16rem);
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: #fff;
+  }
+
+  #date {
+    font-size: clamp(1.2rem, 2.5vw, 2.4rem);
+    font-weight: 300;
+    margin-top: 0.6rem;
+    opacity: 0.55;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  #quote-container {
+    position: absolute;
+    bottom: 8vh;
+    max-width: 70vw;
+    text-align: center;
+    font-size: clamp(1rem, 1.8vw, 1.6rem);
+    font-weight: 300;
+    font-style: italic;
+    opacity: 0.4;
+    line-height: 1.5;
+    min-height: 3em;
+  }
+
+  #quote.entering { animation: fadeIn 0.8s ease forwards; }
+  #quote.exiting  { animation: fadeOut 0.8s ease forwards; }
+</style>
+</head>
+<body>
+<div id="time"></div>
+<div id="date"></div>
+<div id="quote-container"><span id="quote"></span></div>
+<script>
+(function () {
+  const quotes = [
+    "The best way to predict the future is to invent it. — Alan Kay",
+    "Simplicity is the ultimate sophistication. — Leonardo da Vinci",
+    "Stay hungry, stay foolish. — Steve Jobs",
+    "The only way to do great work is to love what you do. — Steve Jobs",
+    "Make it work, make it right, make it fast. — Kent Beck",
+    "First, solve the problem. Then, write the code. — John Johnson",
+    "Talk is cheap. Show me the code. — Linus Torvalds",
+    "Any sufficiently advanced technology is indistinguishable from magic. — Arthur C. Clarke",
+    "Code is like humor. When you have to explain it, it's bad. — Cory House",
+    "Perfection is achieved not when there is nothing more to add, but when there is nothing left to take away. — Antoine de Saint-Exupéry",
+    "The future belongs to those who believe in the beauty of their dreams. — Eleanor Roosevelt",
+    "It does not matter how slowly you go as long as you do not stop. — Confucius",
+    "In the middle of difficulty lies opportunity. — Albert Einstein",
+    "We are what we repeatedly do. Excellence, then, is not an act, but a habit. — Aristotle"
+  ];
+
+  const timeEl = document.getElementById('time');
+  const dateEl = document.getElementById('date');
+  const quoteEl = document.getElementById('quote');
+  let qi = Math.floor(Math.random() * quotes.length);
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+    timeEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function cycleQuote() {
+    quoteEl.className = 'exiting';
+    setTimeout(() => {
+      qi = (qi + 1) % quotes.length;
+      quoteEl.textContent = quotes[qi];
+      quoteEl.className = 'entering';
+    }, 800);
+  }
+
+  tick();
+  quoteEl.textContent = quotes[qi];
+  quoteEl.className = 'entering';
+  setInterval(tick, 1000);
+  setInterval(cycleQuote, 30000);
+})();
+</script>
+</body>
+</html>

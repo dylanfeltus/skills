@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Status Board</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 2.5vw;
+    overflow: hidden;
+  }
+
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2vw;
+  }
+
+  header h1 { font-size: clamp(1.4rem, 2.5vw, 2.2rem); font-weight: 600; color: #fff; }
+  header .meta { font-size: clamp(0.8rem, 1.2vw, 1rem); opacity: 0.5; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5vw;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: clamp(1rem, 1.8vw, 1.8rem);
+  }
+
+  .card h2 {
+    font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  /* Status indicators */
+  .status-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #21262d;
+    font-size: clamp(0.9rem, 1.3vw, 1.15rem);
+  }
+  .status-row:last-child { border-bottom: none; }
+
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 0.6rem; flex-shrink: 0;
+  }
+  .dot.green  { background: #3fb950; box-shadow: 0 0 6px #3fb95088; }
+  .dot.yellow { background: #d29922; box-shadow: 0 0 6px #d2992288; }
+  .dot.red    { background: #f85149; box-shadow: 0 0 6px #f8514988; }
+
+  .status-row .label { display: flex; align-items: center; }
+  .status-row .value { opacity: 0.6; font-variant-numeric: tabular-nums; }
+
+  /* Big number */
+  .big-num {
+    font-size: clamp(2.4rem, 4vw, 4rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .big-label { font-size: clamp(0.8rem, 1vw, 0.95rem); opacity: 0.45; margin-top: 0.3rem; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  /* Events */
+  .event {
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #21262d;
+    font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+  }
+  .event:last-child { border-bottom: none; }
+  .event .ts { opacity: 0.35; font-size: 0.85em; margin-left: 0.4rem; }
+
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ System Status</h1>
+  <div class="meta">Updated <span id="updated"></span></div>
+</header>
+<div class="grid">
+  <!-- Services -->
+  <div class="card">
+    <h2>Services</h2>
+    <div id="services"></div>
+  </div>
+
+  <!-- Agents -->
+  <div class="card">
+    <h2>Agent Activity</h2>
+    <div id="agents"></div>
+  </div>
+
+  <!-- Key Metrics -->
+  <div class="card">
+    <h2>Metrics</h2>
+    <div class="stats-grid" id="metrics"></div>
+  </div>
+
+  <!-- Recent Events -->
+  <div class="card">
+    <h2>Recent Events</h2>
+    <div id="events"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const services = [
+    { name: 'Gateway',    status: 'green' },
+    { name: 'Canvas',     status: 'green' },
+    { name: 'Scheduler',  status: 'green' },
+    { name: 'Telegram',   status: 'green' },
+    { name: 'Vector DB',  status: 'yellow' },
+  ];
+
+  const agents = [
+    { name: 'remy',    status: 'green',  note: 'Building' },
+    { name: 'otto',    status: 'green',  note: 'Monitoring' },
+    { name: 'atlas',   status: 'yellow', note: 'Idle 12m' },
+    { name: 'scout',   status: 'green',  note: 'Researching' },
+  ];
+
+  const eventTemplates = [
+    'Skill canvas-dashboard pushed to GitHub',
+    'Cron job daily-digest completed',
+    'Node mac-mini reconnected',
+    'Agent remy spawned sub-agent',
+    'Canvas snapshot captured on living-room',
+    'Gateway restarted successfully',
+    'New Telegram message processed',
+    'Heartbeat check passed — all agents healthy',
+  ];
+
+  function rel(ms) {
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    return Math.floor(s / 3600) + 'h ago';
+  }
+
+  function render() {
+    const now = new Date();
+    document.getElementById('updated').textContent = now.toLocaleTimeString();
+
+    // Services
+    document.getElementById('services').innerHTML = services.map(s =>
+      `<div class="status-row"><span class="label"><span class="dot ${s.status}"></span>${s.name}</span><span class="value">${s.status === 'green' ? 'Operational' : 'Degraded'}</span></div>`
+    ).join('');
+
+    // Agents
+    document.getElementById('agents').innerHTML = agents.map(a =>
+      `<div class="status-row"><span class="label"><span class="dot ${a.status}"></span>${a.name}</span><span class="value">${a.note}</span></div>`
+    ).join('');
+
+    // Metrics — randomize slightly each tick
+    const uptime = (99.9 + Math.random() * 0.09).toFixed(2);
+    const tasks = Math.floor(140 + Math.random() * 20);
+    const latency = Math.floor(45 + Math.random() * 30);
+    const msgs = Math.floor(1200 + Math.random() * 100);
+    document.getElementById('metrics').innerHTML = [
+      [uptime + '%', 'Uptime (30d)'],
+      [tasks, 'Tasks Today'],
+      [latency + 'ms', 'Avg Latency'],
+      [msgs, 'Messages'],
+    ].map(([v, l]) => `<div><div class="big-num">${v}</div><div class="big-label">${l}</div></div>`).join('');
+
+    // Events
+    const evts = [];
+    for (let i = 0; i < 6; i++) {
+      const ago = Math.floor(Math.random() * 3600000);
+      evts.push({ text: eventTemplates[i % eventTemplates.length], ago });
+    }
+    evts.sort((a, b) => a.ago - b.ago);
+    document.getElementById('events').innerHTML = evts.map(e =>
+      `<div class="event">${e.text}<span class="ts">${rel(e.ago)}</span></div>`
+    ).join('');
+  }
+
+  render();
+  setInterval(render, 10000);
+})();
+</script>
+</body>
+</html>
