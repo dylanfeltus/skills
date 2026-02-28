@@ -1,10 +1,10 @@
 # Generative UI
 
-> **What:** Dynamically generate and push live HTML/CSS/JS interfaces to OpenClaw canvas display surfaces. Transform arbitrary data (JSON metrics, events, lists) into polished, real-time UIs.
+> **What:** Dynamically generate and push live HTML/CSS/JS interfaces to OpenClaw canvas display surfaces. Transform arbitrary data (JSON metrics, events, lists) into polished, real-time UIs. Includes quick-start templates for rapid deployment.
 >
-> **When to use:** Live dashboards, ambient TV displays, data walls, notification feeds, project trackers, system monitors — any scenario where you need to compose UI on the fly from dynamic data.
+> **When to use:** Live dashboards, ambient TV displays, data walls, notification feeds, project trackers, system monitors — any scenario where you need UI on a canvas display.
 >
-> **Difference from canvas-dashboard:** That skill provides static templates. This skill teaches you to **generate** UIs programmatically from data.
+> **Two approaches:** Use the ready-made templates for < 5 minute deployment, or programmatically generate adaptive UIs from dynamic data.
 
 ---
 
@@ -12,14 +12,15 @@
 
 1. [Core Concepts](#core-concepts)
 2. [Component Library](#component-library)
-3. [Design System](#design-system)
-4. [A2UI Protocol Integration](#a2ui-protocol-integration)
-5. [Live Update Patterns](#live-update-patterns)
-6. [TV/Ambient Display Infrastructure](#tvambient-display-infrastructure)
-7. [Data-Driven Generation Workflow](#data-driven-generation-workflow)
-8. [Error Handling](#error-handling)
-9. [TV-Distance Readability](#tv-distance-readability)
-10. [Complete Examples](#complete-examples)
+3. [Quick Start Templates](#quick-start-templates)
+4. [Design System](#design-system)
+5. [A2UI Protocol Integration](#a2ui-protocol-integration)
+6. [Live Update Patterns](#live-update-patterns)
+7. [TV/Ambient Display Infrastructure](#tvambient-display-infrastructure)
+8. [Data-Driven Generation Workflow](#data-driven-generation-workflow)
+9. [Error Handling](#error-handling)
+10. [TV-Distance Readability](#tv-distance-readability)
+11. [Complete Examples](#complete-examples)
 
 ---
 
@@ -660,6 +661,368 @@ Horizontal progress indicator with label.
 ```
 
 **When to use:** Task completion, upload/download progress, quota usage, multi-step processes.
+
+---
+
+## Quick Start Templates
+
+For rapid deployment, here are three production-ready, self-contained HTML templates. These are complete files you can copy, customize, and push directly to a canvas display — no component assembly required.
+
+**Use these when:**
+- You need something running in < 5 minutes
+- The use case matches one of the templates below
+- You want a starting point to customize
+
+**Use programmatic generation when:**
+- Data structure is dynamic or complex
+- You're combining multiple data sources
+- Layout needs to adapt to content
+- See [Data-Driven Generation Workflow](#data-driven-generation-workflow) section
+
+---
+
+### Template 1: Status Board
+
+A service health dashboard with status indicators, agent activity, key metrics, and event feed. Dark theme, auto-refreshes every 10 seconds.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Status Board</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #0d1117; color: #c9d1d9;
+    padding: 2.5vw; overflow: hidden;
+  }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2vw; }
+  header h1 { font-size: clamp(1.4rem, 2.5vw, 2.2rem); font-weight: 600; color: #fff; }
+  header .meta { font-size: clamp(0.8rem, 1.2vw, 1rem); opacity: 0.5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5vw; }
+  .card {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: clamp(1rem, 1.8vw, 1.8rem);
+  }
+  .card h2 {
+    font-size: clamp(0.85rem, 1.2vw, 1.05rem); text-transform: uppercase;
+    letter-spacing: 0.08em; opacity: 0.5; margin-bottom: 1rem; font-weight: 500;
+  }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid #21262d; font-size: clamp(0.9rem, 1.3vw, 1.15rem); }
+  .row:last-child { border-bottom: none; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 0.6rem; }
+  .dot.ok   { background: #3fb950; box-shadow: 0 0 6px #3fb95088; }
+  .dot.warn { background: #d29922; box-shadow: 0 0 6px #d2992288; }
+  .dot.err  { background: #f85149; box-shadow: 0 0 6px #f8514988; }
+  .label { display: flex; align-items: center; }
+  .value { opacity: 0.6; }
+  .big { font-size: clamp(2.4rem, 4vw, 4rem); font-weight: 700; color: #fff; line-height: 1; }
+  .sub { font-size: clamp(0.8rem, 1vw, 0.95rem); opacity: 0.45; margin-top: 0.3rem; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ System Status</h1>
+  <div class="meta">Updated <span id="ts"></span></div>
+</header>
+<div class="grid">
+  <div class="card"><h2>Services</h2><div id="svc"></div></div>
+  <div class="card"><h2>Agents</h2><div id="agt"></div></div>
+  <div class="card"><h2>Metrics</h2><div class="stats" id="met"></div></div>
+  <div class="card"><h2>Recent Events</h2><div id="evt"></div></div>
+</div>
+<script>
+// ——— CUSTOMIZE: Replace these arrays with your real data or fetch calls ———
+const services = [
+  { name: 'Gateway', status: 'ok' },
+  { name: 'Canvas', status: 'ok' },
+  { name: 'Scheduler', status: 'ok' },
+  { name: 'Database', status: 'warn' },
+];
+const agents = [
+  { name: 'remy', status: 'ok', note: 'Building' },
+  { name: 'otto', status: 'ok', note: 'Monitoring' },
+  { name: 'scout', status: 'warn', note: 'Idle 8m' },
+];
+
+function render() {
+  document.getElementById('ts').textContent = new Date().toLocaleTimeString();
+  document.getElementById('svc').innerHTML = services.map(s =>
+    `<div class="row"><span class="label"><span class="dot ${s.status}"></span>${s.name}</span><span class="value">${s.status === 'ok' ? 'Operational' : 'Degraded'}</span></div>`
+  ).join('');
+  document.getElementById('agt').innerHTML = agents.map(a =>
+    `<div class="row"><span class="label"><span class="dot ${a.status}"></span>${a.name}</span><span class="value">${a.note}</span></div>`
+  ).join('');
+  document.getElementById('met').innerHTML = [
+    [(99.9 + Math.random()*0.09).toFixed(2) + '%', 'Uptime'],
+    [Math.floor(130 + Math.random()*30), 'Tasks Today'],
+    [Math.floor(40 + Math.random()*25) + 'ms', 'Latency'],
+    [Math.floor(1100 + Math.random()*200), 'Messages'],
+  ].map(([v,l]) => `<div><div class="big">${v}</div><div class="sub">${l}</div></div>`).join('');
+  document.getElementById('evt').innerHTML = [
+    'Skill deployed to production',
+    'Cron daily-digest completed',
+    'Node mac-mini reconnected',
+    'Canvas snapshot captured',
+    'Agent spawned sub-agent',
+  ].map((t,i) => `<div class="row">${t}<span class="value">${i*3+1}m ago</span></div>`).join('');
+}
+render();
+setInterval(render, 10000);
+</script>
+</body>
+</html>
+```
+
+**Deployment:**
+
+```python
+# 1. Copy the template
+status_board_html = """<!DOCTYPE html>..."""  # Full HTML above
+
+# 2. Customize the data arrays (services, agents) in the JavaScript
+
+# 3. Write to canvas
+write("~/.openclaw/canvas/status-board.html", status_board_html)
+
+# 4. Push to display
+canvas(action="present", node="office-tv", 
+       url="http://localhost:18789/__openclaw__/canvas/status-board.html")
+```
+
+**Live updates:**
+
+```python
+# Update a specific metric without reload
+canvas(action="eval", node="office-tv", javaScript="""
+  document.getElementById('ts').textContent = new Date().toLocaleTimeString();
+  // Add more updates as needed
+""")
+```
+
+---
+
+### Template 2: Metrics Dashboard
+
+KPI cards with sparkline charts. Pure CSS/JS sparklines — no chart library needed.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metrics</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #0d1117; color: #c9d1d9;
+    padding: 2.5vw; overflow: hidden;
+  }
+  h1 { font-size: clamp(1.4rem, 2.5vw, 2.2rem); font-weight: 600; color: #fff; margin-bottom: 2vw; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5vw; }
+  .kpi {
+    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    padding: clamp(1.2rem, 2vw, 2rem);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .kpi-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.45; }
+  .kpi-value { font-size: clamp(2.5rem, 4.5vw, 4.5rem); font-weight: 700; color: #fff; margin: 0.3rem 0; }
+  .kpi-delta { font-size: 0.95rem; }
+  .kpi-delta.up { color: #3fb950; }
+  .kpi-delta.down { color: #f85149; }
+  .spark { margin-top: 0.8rem; }
+  .spark svg { width: 100%; height: 40px; }
+  .spark polyline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .spark .area { stroke: none; opacity: 0.1; }
+</style>
+</head>
+<body>
+<h1>📊 Metrics Dashboard</h1>
+<div class="grid" id="grid"></div>
+<script>
+// ——— CUSTOMIZE: Replace with your own KPIs ———
+const kpis = [
+  { label: 'Revenue', value: '$48.2K', delta: '+12.3%', up: true },
+  { label: 'Active Users', value: '3,847', delta: '+5.1%', up: true },
+  { label: 'Error Rate', value: '0.03%', delta: '-18%', up: true },
+  { label: 'Avg Response', value: '142ms', delta: '+8ms', up: false },
+  { label: 'Deployments', value: '23', delta: '+4 today', up: true },
+  { label: 'Uptime', value: '99.97%', delta: '30d rolling', up: true },
+];
+
+function sparkData(n) {
+  const d = []; let v = 50;
+  for (let i = 0; i < n; i++) { v = Math.max(10, Math.min(90, v + (Math.random() - 0.45) * 15)); d.push(v); }
+  return d;
+}
+
+function sparkSvg(data, color) {
+  const w = 200, h = 40, n = data.length;
+  const pts = data.map((v, i) => `${(i / (n - 1)) * w},${h - (v / 100) * h}`).join(' ');
+  const area = pts + ` ${w},${h} 0,${h}`;
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polygon class="area" points="${area}" fill="${color}"/>
+    <polyline points="${pts}" stroke="${color}"/>
+  </svg>`;
+}
+
+document.getElementById('grid').innerHTML = kpis.map(k => {
+  const color = k.up ? '#3fb950' : '#f85149';
+  return `<div class="kpi">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div>
+    <div class="kpi-delta ${k.up ? 'up' : 'down'}">${k.delta}</div>
+    <div class="spark">${sparkSvg(sparkData(20), color)}</div>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
+```
+
+**Deployment:**
+
+```python
+# Customize the kpis array with your metrics, then:
+write("~/.openclaw/canvas/metrics.html", metrics_html)
+canvas(action="present", node="office-tv", 
+       url="http://localhost:18789/__openclaw__/canvas/metrics.html")
+```
+
+---
+
+### Template 3: Ambient Display
+
+Minimal, beautiful always-on display with time, date, and rotating quotes. Slow gradient background shift.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ambient</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  @keyframes bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  @keyframes fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  body {
+    height: 100vh; width: 100vw; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e, #0f0c29);
+    background-size: 400% 400%; animation: bg 120s ease infinite;
+    color: #e0e0e0;
+  }
+  #time { font-size: clamp(6rem, 14vw, 16rem); font-weight: 200; letter-spacing: -0.02em; color: #fff; }
+  #date { font-size: clamp(1.2rem, 2.5vw, 2.4rem); font-weight: 300; margin-top: 0.6rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.15em; }
+  #quote-box { position: absolute; bottom: 8vh; max-width: 70vw; text-align: center; font-size: clamp(1rem, 1.8vw, 1.6rem); font-weight: 300; font-style: italic; opacity: 0.4; min-height: 3em; }
+  #q.in  { animation: fadeIn 0.8s ease forwards; }
+  #q.out { animation: fadeOut 0.8s ease forwards; }
+</style>
+</head>
+<body>
+<div id="time"></div>
+<div id="date"></div>
+<div id="quote-box"><span id="q"></span></div>
+<script>
+// ——— CUSTOMIZE: Edit the quotes array ———
+const quotes = [
+  "The best way to predict the future is to invent it. — Alan Kay",
+  "Simplicity is the ultimate sophistication. — Leonardo da Vinci",
+  "Stay hungry, stay foolish. — Steve Jobs",
+  "Make it work, make it right, make it fast. — Kent Beck",
+  "Any sufficiently advanced technology is indistinguishable from magic. — Arthur C. Clarke",
+  "Perfection is achieved when there is nothing left to take away. — Saint-Exupéry",
+];
+let qi = 0;
+const p = s => String(s).padStart(2, '0');
+function tick() {
+  const d = new Date();
+  document.getElementById('time').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  document.getElementById('date').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+function cycle() {
+  const el = document.getElementById('q');
+  el.className = 'out';
+  setTimeout(() => { qi = (qi + 1) % quotes.length; el.textContent = quotes[qi]; el.className = 'in'; }, 800);
+}
+document.getElementById('q').textContent = quotes[0];
+document.getElementById('q').className = 'in';
+tick(); setInterval(tick, 1000); setInterval(cycle, 30000);
+</script>
+</body>
+</html>
+```
+
+**Deployment:**
+
+```python
+# Perfect for always-on lobby/living room displays
+write("~/.openclaw/canvas/ambient.html", ambient_html)
+canvas(action="present", node="living-room", 
+       url="http://localhost:18789/__openclaw__/canvas/ambient.html")
+```
+
+---
+
+### Customizing Templates
+
+**Data sources:**
+
+Every template has a `// CUSTOMIZE` comment showing where to modify data. Options:
+
+1. **Hardcode static data** (simplest)
+   ```javascript
+   const services = [
+     { name: 'API', status: 'ok' },
+     { name: 'DB', status: 'warn' }
+   ];
+   ```
+
+2. **Fetch from API** (dynamic)
+   ```javascript
+   async function refresh() {
+     const data = await fetch('/api/metrics').then(r => r.json());
+     renderDashboard(data);
+   }
+   setInterval(refresh, 10000);
+   ```
+
+3. **Read from local file** (agent-written)
+   ```javascript
+   // Agent writes: write("~/.openclaw/canvas/data.json", json_data)
+   // Dashboard reads:
+   setInterval(async () => {
+     const data = await fetch('data.json').then(r => r.json());
+     updateMetrics(data);
+   }, 5000);
+   ```
+
+4. **Agent-pushed updates** (surgical)
+   ```python
+   # Agent sends updates without dashboard polling
+   canvas(action="eval", node="office-tv", javaScript="""
+     document.querySelector('#cpu-value').textContent = '42%';
+   """)
+   ```
+
+**When to graduate to programmatic generation:**
+
+Start with templates. Switch to [Data-Driven Generation](#data-driven-generation-workflow) when:
+- You have > 3 data sources to combine
+- Layout needs to adapt to data shape
+- Multiple displays need different views of same data
+- You're building complex dashboards with conditional sections
 
 ---
 
@@ -2187,7 +2550,6 @@ send_a2ui_update(node="office-tv", selector="#feed", content="<div>...</div>")
 
 ## Related Skills
 
-- **canvas-dashboard** — Static dashboard templates
 - **design-tokens** — Color systems and design variables
 - **motion-design-patterns** — Animation guidelines
 

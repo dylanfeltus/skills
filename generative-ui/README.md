@@ -8,16 +8,21 @@ Turn arbitrary data (JSON, APIs, events) into polished, real-time dashboards and
 
 ## What Is This?
 
-Generative UI teaches AI agents to **compose** user interfaces programmatically from dynamic data, rather than filling static templates.
+Generative UI teaches AI agents to **compose** user interfaces programmatically from dynamic data.
 
-**The difference:**
+**Two approaches in one skill:**
 
-| Static Templates (canvas-dashboard) | Generative UI (this skill) |
-|-------------------------------------|----------------------------|
-| Pre-written HTML with placeholders | Generated HTML from data structure |
-| Fixed layout | Adaptive layout based on content |
-| Manual updates | Real-time surgical updates |
-| One template per use case | One generator for many data shapes |
+1. **Quick Start Templates** — Three production-ready HTML files you can deploy in < 5 minutes (status board, metrics dashboard, ambient display)
+2. **Programmatic Generation** — Build adaptive UIs from arbitrary data using components and patterns
+
+**When to use each:**
+
+| Static Templates | Programmatic Generation |
+|------------------|-------------------------|
+| Need something running in < 5 minutes | Complex, multi-source dashboards |
+| Use case matches a template | Data structure is dynamic |
+| Starting point to customize | Layout adapts to content |
+| Simple, fixed layout | Real-time surgical updates |
 
 ---
 
@@ -36,9 +41,19 @@ Comprehensive guide covering:
 - **Error Handling** — Retry patterns, validation, fallback displays, health monitoring
 - **TV-Distance Readability** — Typography, contrast, spacing, motion guidelines for 10-foot viewing
 
-### Examples
+### Quick Start Templates
 
-Three production-ready HTML files:
+The skill now includes three ready-to-deploy static templates for rapid deployment:
+
+- **Status Board** — Service health, agent activity, metrics, events (auto-refreshes every 10s)
+- **Metrics Dashboard** — KPI cards with pure CSS/JS sparklines
+- **Ambient Display** — Always-on clock with rotating quotes and slow gradient background
+
+See the [Quick Start Templates](#quick-start-templates) section in SKILL.md for full HTML.
+
+### Dynamic Examples
+
+Three production-ready HTML files showing programmatic generation patterns:
 
 #### `examples/live-feed.html`
 Real-time scrolling event feed. Shows HN stories, GitHub activity, or system logs. Dark theme, auto-updates, no CDN dependencies.
@@ -530,7 +545,6 @@ Improvements welcome! Particularly:
 
 ## Related Skills
 
-- **canvas-dashboard** — Static dashboard templates (simpler, good for fixed layouts)
 - **design-tokens** — Color systems and design variable management
 - **motion-design-patterns** — Animation timing and easing guidelines
 
