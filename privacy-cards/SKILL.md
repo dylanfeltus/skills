@@ -115,10 +115,11 @@ GET https://api.privacy.com/v1/transactions?card_token={token}&result=APPROVED&p
 2. Choose card type:
    - One-time purchase? Use `SINGLE_USE`
    - Recurring at one merchant (e.g., subscription)? Use `MERCHANT_LOCKED`
-3. Create the card via `web_fetch` or `exec` with curl:
+3. Create the card and extract only the fields you need. **Never log or print the full API response** — it contains the full card number (PAN) and CVV which must not appear in chat logs or transcripts.
 
 ```bash
-curl -s https://api.privacy.com/v1/cards \
+# Create card and extract only safe fields for logging
+RESPONSE=$(curl -s https://api.privacy.com/v1/cards \
   -X POST \
   -H "Authorization: api-key $PRIVACY_API_KEY" \
   -H "Content-Type: application/json" \
@@ -128,10 +129,34 @@ curl -s https://api.privacy.com/v1/cards \
     "spend_limit": AMOUNT_IN_CENTS,
     "spend_limit_duration": "TRANSACTION",
     "state": "OPEN"
-  }'
+  }')
+
+# Log only safe fields (no PAN/CVV)
+echo "$RESPONSE" | python3 -c "
+import sys, json
+card = json.load(sys.stdin)
+print(json.dumps({
+  'token': card.get('token'),
+  'last_four': card.get('last_four'),
+  'exp_month': card.get('exp_month'),
+  'exp_year': card.get('exp_year'),
+  'spend_limit': card.get('spend_limit'),
+  'state': card.get('state'),
+  'memo': card.get('memo')
+}, indent=2))
+"
 ```
 
-4. Extract `pan`, `cvv`, `exp_month`, `exp_year` from the response
+4. When you need the full card details for checkout, extract them in a **separate step that is not logged to chat**. Use the card details directly in the browser tool or API call without printing them.
+
+```bash
+# Extract card details for checkout (DO NOT print to chat)
+PAN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['pan'])")
+CVV=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['cvv'])")
+EXP_MONTH=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['exp_month'])")
+EXP_YEAR=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['exp_year'])")
+```
+
 5. Use these card details to complete the purchase (via browser tool or API)
 6. After purchase, verify with the transactions endpoint
 
@@ -175,7 +200,7 @@ curl -s "https://api.privacy.com/v1/transactions?page=1&page_size=10" \
 2. **Use `SINGLE_USE` by default.** Only use `MERCHANT_LOCKED` if explicitly needed for recurring charges.
 3. **Set the spend limit as close to the expected amount as possible.** Round up to the next whole dollar, but don't over-allocate (e.g., $12.99 item = $13.00 = 1300 cents).
 4. **Close or pause cards after use.** `SINGLE_USE` cards auto-close, but `MERCHANT_LOCKED` cards stay open. Close them when no longer needed.
-5. **Never log or display the full PAN in chat messages.** When reporting card details to the user, show only the last four digits. Only expose full card details when actively using them for a purchase.
+5. **Never log, print, or display the full PAN or CVV in chat, logs, or tool output.** The raw API response contains sensitive card data (PAN, CVV) that must not appear in transcripts. Always parse the response and extract only safe fields (token, last_four, memo, spend_limit, state) for logging. Use full card details only in the checkout step, never echoed to chat.
 6. **Include a descriptive memo** on every card so the user can identify what it was for in their Privacy.com dashboard.
 
 ## Output Format
