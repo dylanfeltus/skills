@@ -17,6 +17,12 @@ Skills are structured instructions that give AI agents domain expertise and syst
 | [appstore-intel](./appstore-intel/) | App Store ratings, reviews, and metadata (iOS + Android) | ❌ Free, no key |
 | [trademark-search](./trademark-search/) | USPTO trademark availability search | ❌ Free, no key |
 
+### Agent Commerce
+
+| Skill | Description | Auth Required |
+|-------|-------------|---------------|
+| [privacy-cards](./privacy-cards/) | Create virtual cards for agent purchases via Privacy.com API | ✅ Privacy.com API key |
+
 ### Design
 
 | Skill | Description | Auth Required |
