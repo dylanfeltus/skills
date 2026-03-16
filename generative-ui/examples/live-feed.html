@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Feed</title>
+  <style>
+    /* Design System */
+    :root {
+      --background: #0d1117;
+      --surface: #161b22;
+      --surface-elevated: #21262d;
+      --surface-hover: #30363d;
+      --border: #30363d;
+      --border-subtle: #21262d;
+      
+      --text-primary: #e6edf3;
+      --text-secondary: #c9d1d9;
+      --text-tertiary: #7d8590;
+      
+      --success: #3fb950;
+      --success-glow: rgba(63, 185, 80, 0.4);
+      
+      --info: #58a6ff;
+      --info-glow: rgba(88, 166, 255, 0.4);
+      
+      --warning: #d29922;
+      --warning-glow: rgba(210, 153, 34, 0.4);
+      
+      --error: #f85149;
+      --error-glow: rgba(248, 81, 73, 0.4);
+      
+      --accent: #58a6ff;
+    }
+    
+    /* Base Reset */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--background);
+      color: var(--text-secondary);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      overflow-x: hidden;
+    }
+    
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: clamp(1.5rem, 3vw, 2rem);
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    header h1 {
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    header .meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+      opacity: 0.6;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: clamp(2rem, 3vw, 2.5rem);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--border) 0%, transparent 100%);
+    }
+    
+    .timeline-item {
+      position: relative;
+      padding-bottom: clamp(1.5rem, 2.5vw, 2rem);
+      opacity: 0;
+      animation: fadeIn 0.6s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .timeline-item:nth-child(1) { animation-delay: 0.05s; }
+    .timeline-item:nth-child(2) { animation-delay: 0.1s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.15s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.2s; }
+    .timeline-item:nth-child(5) { animation-delay: 0.25s; }
+    .timeline-item:nth-child(6) { animation-delay: 0.3s; }
+    .timeline-item:nth-child(7) { animation-delay: 0.35s; }
+    .timeline-item:nth-child(8) { animation-delay: 0.4s; }
+    
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+    
+    .timeline-marker {
+      position: absolute;
+      left: -2rem;
+      top: 0.35rem;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--background);
+      z-index: 1;
+    }
+    
+    .timeline-marker-success {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success-glow);
+    }
+    
+    .timeline-marker-info {
+      background: var(--info);
+      box-shadow: 0 0 8px var(--info-glow);
+    }
+    
+    .timeline-marker-warning {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning-glow);
+    }
+    
+    .timeline-marker-error {
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error-glow);
+    }
+    
+    .timeline-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: clamp(1rem, 1.8vw, 1.5rem);
+      transition: all 0.3s ease;
+    }
+    
+    .timeline-content:hover {
+      background: var(--surface-elevated);
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+    
+    .timeline-time {
+      font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+      opacity: 0.5;
+      margin-bottom: 0.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .timeline-title {
+      font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+    
+    .timeline-body {
+      font-size: clamp(0.95rem, 1.25vw, 1.1rem);
+      opacity: 0.8;
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+    
+    .timeline-meta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: clamp(0.85rem, 1.1vw, 1rem);
+      opacity: 0.6;
+    }
+    
+    .timeline-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25em 0.65em;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 600;
+      background: var(--surface-elevated);
+      color: var(--text-secondary);
+    }
+    
+    .badge-success {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--success);
+    }
+    
+    .badge-info {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--info);
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      opacity: 0.5;
+    }
+    
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .empty-state-text {
+      font-size: clamp(1rem, 1.3vw, 1.2rem);
+    }
+    
+    /* Loading Indicator */
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    .loading-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+      
+      .timeline {
+        padding-left: 1.5rem;
+      }
+      
+      .timeline-marker {
+        left: -1.5rem;
+      }
+    }
+    
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* Fallback for no-JS */
+    noscript .timeline-item {
+      opacity: 1 !important;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔴 Live Feed</h1>
+    <div class="meta">
+      <div class="status-indicator"></div>
+      <span id="last-update">Just now</span>
+    </div>
+  </header>
+  
+  <div id="loading" class="loading" style="display: none;">
+    <div class="loading-spinner"></div>
+    <span>Loading new events...</span>
+  </div>
+  
+  <div id="timeline" class="timeline">
+    <!-- Sample events (replace with real data) -->
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-success"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">2 minutes ago</div>
+        <div class="timeline-title">Deployment Successful: Production v2.4.1</div>
+        <div class="timeline-body">
+          All services deployed successfully. Zero downtime deployment completed in 3m 42s.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">📦 stellar-web</span>
+          <span class="timeline-meta-item">✓ 12 tests passed</span>
+          <span class="badge badge-success">Production</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-info"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">8 minutes ago</div>
+        <div class="timeline-title">New GitHub PR: Add dark mode to settings page</div>
+        <div class="timeline-body">
+          claudia opened a pull request in stellarco/web. Adds user preference toggle for dark/light theme in settings.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">👤 claudia</span>
+          <span class="timeline-meta-item">+247 −89</span>
+          <span class="badge badge-info">Review</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-info"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">14 minutes ago</div>
+        <div class="timeline-title">HN: Show HN: I built a CLI for Claude AI</div>
+        <div class="timeline-body">
+          Currently #3 on Hacker News front page with 142 points and 37 comments. Discussion focused on agent safety and local-first architecture.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">⬆ 142 points</span>
+          <span class="timeline-meta-item">💬 37 comments</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-success"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">22 minutes ago</div>
+        <div class="timeline-title">Build Complete: otto-canvas #847</div>
+        <div class="timeline-body">
+          All checks passed. Bundle size: 287 KB (gzipped). Lighthouse score: 98/100.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">⚡ 2m 14s</span>
+          <span class="timeline-meta-item">✓ All checks passed</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-info"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">28 minutes ago</div>
+        <div class="timeline-title">New Star on GitHub: dylanfeltus/otto-canvas</div>
+        <div class="timeline-body">
+          Repository now has 47 stars. Recent activity spike after HN feature.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">⭐ 47 stars</span>
+          <span class="timeline-meta-item">🍴 8 forks</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-info"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">35 minutes ago</div>
+        <div class="timeline-title">System Alert: CPU usage spike detected</div>
+        <div class="timeline-body">
+          Mac mini CPU usage reached 87% during build process. Returned to normal levels after completion.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">🖥️ mac-mini</span>
+          <span class="timeline-meta-item">87% peak</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-success"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">41 minutes ago</div>
+        <div class="timeline-title">Agent Task Complete: Update documentation</div>
+        <div class="timeline-body">
+          Builder agent successfully updated README.md and CHANGELOG.md with v2.4.1 release notes.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">🤖 builder</span>
+          <span class="timeline-meta-item">2 files changed</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="timeline-item">
+      <div class="timeline-marker timeline-marker-info"></div>
+      <div class="timeline-content">
+        <div class="timeline-time">48 minutes ago</div>
+        <div class="timeline-title">HN: Best practices for AI agent safety</div>
+        <div class="timeline-body">
+          Trending discussion on Hacker News about sandboxing, capability limits, and human oversight patterns for AI agents.
+        </div>
+        <div class="timeline-meta">
+          <span class="timeline-meta-item">⬆ 89 points</span>
+          <span class="timeline-meta-item">💬 54 comments</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="empty-state" class="empty-state" style="display: none;">
+    <div class="empty-state-icon">📭</div>
+    <div class="empty-state-text">No events yet. Waiting for activity...</div>
+  </div>
+  
+  <script>
+    // Auto-refresh functionality
+    let lastUpdateTime = Date.now();
+    
+    function updateTimestamp() {
+      const now = Date.now();
+      const diff = Math.floor((now - lastUpdateTime) / 1000);
+      
+      const elem = document.getElementById('last-update');
+      if (diff < 60) {
+        elem.textContent = 'Just now';
+      } else if (diff < 3600) {
+        const mins = Math.floor(diff / 60);
+        elem.textContent = `${mins} minute${mins > 1 ? 's' : ''} ago`;
+      } else {
+        const hours = Math.floor(diff / 3600);
+        elem.textContent = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+      }
+    }
+    
+    // Update timestamp every 10 seconds
+    setInterval(updateTimestamp, 10000);
+    
+    // Simulate auto-refresh (replace with real data fetch or A2UI)
+    function simulateRefresh() {
+      const loading = document.getElementById('loading');
+      loading.style.display = 'flex';
+      
+      setTimeout(() => {
+        loading.style.display = 'none';
+        lastUpdateTime = Date.now();
+        updateTimestamp();
+        
+        // In real implementation:
+        // 1. Fetch new events from API
+        // 2. Generate timeline HTML
+        // 3. Prepend to timeline
+        // 4. Or receive via A2UI WebSocket
+      }, 1500);
+    }
+    
+    // Refresh every 30 seconds
+    setInterval(simulateRefresh, 30000);
+    
+    // A2UI Integration (optional)
+    // Uncomment to enable real-time updates via OpenClaw A2UI
+    /*
+    (function() {
+      const ws = new WebSocket('ws://localhost:18789/__openclaw__/a2ui/stream');
+      
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'surfaceUpdate' && message.payload.targetSelector === '#timeline') {
+            const timeline = document.getElementById('timeline');
+            
+            if (message.payload.updateType === 'prepend') {
+              timeline.insertAdjacentHTML('afterbegin', message.payload.content);
+              lastUpdateTime = Date.now();
+              updateTimestamp();
+            }
+          }
+        } catch (error) {
+          console.error('A2UI parse error:', error);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('A2UI connection error:', error);
+      };
+      
+      ws.onclose = () => {
+        console.log('A2UI disconnected, reconnecting in 5s...');
+        setTimeout(() => location.reload(), 5000);
+      };
+    })();
+    */
+    
+    // Check for empty timeline
+    function checkEmpty() {
+      const timeline = document.getElementById('timeline');
+      const emptyState = document.getElementById('empty-state');
+      
+      if (timeline.children.length === 0) {
+        timeline.style.display = 'none';
+        emptyState.style.display = 'block';
+      } else {
+        timeline.style.display = 'block';
+        emptyState.style.display = 'none';
+      }
+    }
+    
+    checkEmpty();
+  </script>
+  
+  <noscript>
+    <style>
+      .timeline-item {
+        opacity: 1 !important;
+        animation: none !important;
+      }
+    </style>
+  </noscript>
+</body>
+</html>
