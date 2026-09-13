@@ -1,6 +1,6 @@
 # Skills Library
 
-A collection of reusable AI agent skills for research, intelligence gathering, design, and content creation. Drop a folder into your agent's skills directory and it just works.
+A collection of reusable AI agent skills for research, intelligence gathering, design, web quality, and everyday workflow. Drop a folder into your agent's skills directory and it just works.
 
 ## What are skills?
 
@@ -23,7 +23,7 @@ Skills are structured instructions that give AI agents domain expertise and syst
 |-------|-------------|---------------|
 | [privacy-cards](./privacy-cards/) | Create virtual cards for agent purchases via Privacy.com API | ✅ Privacy.com API key |
 
-### Design
+### Design & Web Quality
 
 | Skill | Description | Auth Required |
 |-------|-------------|---------------|
@@ -31,6 +31,20 @@ Skills are structured instructions that give AI agents domain expertise and syst
 | [design-tokens](./design-tokens/) | Type scales, color palettes, spacing grids, WCAG contrast, dark mode derivation | ❌ None |
 | [creative-direction](./creative-direction/) | Image prompt templates, model selection, anti-generic patterns | ❌ None |
 | [visual-qa](./visual-qa/) | Screenshot review against design intent using vision models | ❌ None |
+| [accessibility-audit](./accessibility-audit/) | WCAG 2.1 AA audit — axe-core scan plus manual keyboard, ARIA, and contrast checks | ❌ None |
+| [web-vitals](./web-vitals/) | Core Web Vitals, load performance, and render-blocking diagnosis | ❌ None |
+
+### Productivity
+
+| Skill | Description | Auth Required |
+|-------|-------------|---------------|
+| [inbox-triage](./inbox-triage/) | Triage email by urgency, draft replies, generate a digest — never sends | ✅ Gmail connector or IMAP |
+
+### Engineering
+
+| Skill | Description | Auth Required |
+|-------|-------------|---------------|
+| [repo-hygiene](./repo-hygiene/) | Stale branches, PR triage, issue flagging, README drift detection | ✅ `gh` CLI or GitHub token |
 
 ### Content & Quality
 
@@ -61,6 +75,10 @@ Auto-detects your agent (Claude Code, OpenClaw, Codex, Cursor, etc.)
 Each skill includes:
 - `SKILL.md` — Full instructions the agent reads (trigger conditions, API details, error handling, output format)
 - `README.md` — Human-facing docs
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
 
 ## Contributing
 
