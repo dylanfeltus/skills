@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stratus Labs — Ambient Display</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg-1: #0a0a0f;
+    --bg-2: #0f0f1a;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text-primary: rgba(255,255,255,0.92);
+    --text-secondary: rgba(255,255,255,0.55);
+    --accent: #6366f1;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg-1);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, #0d0a1a 100%);
+  }
+
+  .container {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 40px 48px;
+    gap: 32px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+  .header .time-display {
+    font-size: 20px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s;
+  }
+  .card:hover { background: rgba(255,255,255,0.06); }
+
+  .card-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .card-value {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+
+  .card-trend {
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+  .trend-flat { color: var(--amber); }
+
+  /* Big clock card */
+  .clock-card {
+    grid-column: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .clock-card .big-time {
+    font-size: 120px;
+    font-weight: 200;
+    letter-spacing: -4px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock-card .big-date {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+
+  /* Quote card */
+  .quote-card {
+    grid-column: 3;
+    justify-content: center;
+  }
+  .quote-text {
+    font-size: 18px;
+    line-height: 1.6;
+    font-weight: 400;
+    font-style: italic;
+    color: rgba(255,255,255,0.75);
+  }
+  .quote-author {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 16px;
+    font-style: normal;
+  }
+
+  /* Status dots */
+  .status-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); animation-delay: 0.5s; }
+  .dot-red { background: var(--red); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Sparkline */
+  .sparkline {
+    margin-top: auto;
+    padding-top: 12px;
+    height: 40px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .spark-bar {
+    flex: 1;
+    background: var(--accent);
+    border-radius: 2px;
+    opacity: 0.6;
+    transition: height 0.5s ease;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .footer .status-row { margin-top: 0; }
+
+  /* Glow effect */
+  .glow {
+    position: fixed;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: drift 20s ease-in-out infinite;
+  }
+  .glow-1 { top: -100px; right: -100px; }
+  .glow-2 { bottom: -150px; left: -100px; animation-delay: -10s; background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%); }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-30px, 20px); }
+    66% { transform: translate(20px, -30px); }
+  }
+</style>
+</head>
+<body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="container">
+  <header class="header">
+    <h1>Stratus Labs</h1>
+    <span class="time-display" id="headerTime"></span>
+  </header>
+
+  <div class="main-grid">
+    <!-- Clock -->
+    <div class="card clock-card">
+      <div class="big-time" id="bigTime"></div>
+      <div class="big-date" id="bigDate"></div>
+    </div>
+
+    <!-- Quote -->
+    <div class="card quote-card">
+      <div class="quote-text" id="quoteText"></div>
+      <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+    <!-- Metric cards -->
+    <div class="card">
+      <div class="card-label">Agent Sessions</div>
+      <div class="card-value" id="metricSessions">24</div>
+      <div class="card-sub">today</div>
+      <div class="card-trend trend-up">↑ 12% vs yesterday</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Tasks Completed</div>
+      <div class="card-value" id="metricTasks">147</div>
+      <div class="card-sub">this week</div>
+      <div class="sparkline" id="sparkTasks"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Uptime</div>
+      <div class="card-value" style="color: var(--green);">99.8%</div>
+      <div class="card-sub">last 30 days</div>
+      <div class="card-trend trend-flat">— stable</div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="status-row">
+      <div class="status-item"><span class="dot dot-green"></span> Gateway</div>
+      <div class="status-item"><span class="dot dot-green"></span> Telegram</div>
+      <div class="status-item"><span class="dot dot-amber"></span> Canvas</div>
+    </div>
+    <span>Generated by Remy · OpenClaw Generative UI</span>
+  </footer>
+</div>
+
+<script>
+const quotes = [
+  { text: "The best way to predict the future is to invent it.", author: "Alan Kay" },
+  { text: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci" },
+  { text: "Make it work, make it right, make it fast.", author: "Kent Beck" },
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { text: "Code is like humor. When you have to explain it, it's bad.", author: "Cory House" },
+  { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
+  { text: "Ship it.", author: "Every startup ever" },
+  { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+];
+
+let quoteIdx = Math.floor(Math.random() * quotes.length);
+
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const s = now.getSeconds().toString().padStart(2, '0');
+  
+  document.getElementById('bigTime').textContent = `${h}:${m}`;
+  document.getElementById('headerTime').textContent = `${h}:${m}:${s}`;
+  
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('bigDate').textContent = now.toLocaleDateString('en-US', opts);
+}
+
+function updateQuote() {
+  quoteIdx = (quoteIdx + 1) % quotes.length;
+  const q = quotes[quoteIdx];
+  document.getElementById('quoteText').textContent = `"${q.text}"`;
+  document.getElementById('quoteAuthor').textContent = `— ${q.author}`;
+}
+
+function buildSparkline(id, count) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'spark-bar';
+    bar.style.height = (20 + Math.random() * 80) + '%';
+    el.appendChild(bar);
+  }
+}
+
+function simulateMetrics() {
+  const sessions = 20 + Math.floor(Math.random() * 10);
+  const tasks = 140 + Math.floor(Math.random() * 20);
+  document.getElementById('metricSessions').textContent = sessions;
+  document.getElementById('metricTasks').textContent = tasks;
+  buildSparkline('sparkTasks', 14);
+}
+
+// Init
+updateClock();
+updateQuote();
+simulateMetrics();
+
+setInterval(updateClock, 1000);
+setInterval(updateQuote, 30000);
+setInterval(simulateMetrics, 60000);
+</script>
+</body>
+</html>

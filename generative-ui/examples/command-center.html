@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stratus Labs — Command Center</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #08090d;
+    --surface: rgba(255,255,255,0.035);
+    --surface-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.07);
+    --text-1: rgba(255,255,255,0.92);
+    --text-2: rgba(255,255,255,0.5);
+    --accent: #6366f1;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background: linear-gradient(160deg, #08090d 0%, #0c0e18 40%, #0a0d14 100%);
+  }
+
+  .shell {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 56px 1fr 44px;
+    padding: 0;
+  }
+
+  /* ── Header ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-left .logo {
+    font-size: 13px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-2);
+  }
+  .topbar-left .logo span { color: var(--accent); }
+  .topbar-left .divider { width: 1px; height: 20px; background: var(--border); }
+  .topbar-left .label { font-size: 13px; color: var(--text-2); font-weight: 500; }
+  .topbar-right { display: flex; align-items: center; gap: 20px; }
+  .topbar-right .clock {
+    font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums;
+    color: var(--text-2);
+  }
+  .topbar-right .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ── Main Content ── */
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 320px;
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .panel {
+    background: var(--bg);
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-label {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-2); margin-bottom: 20px;
+  }
+
+  /* ── System Gauges ── */
+  .gauges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    flex: 1;
+  }
+  .gauge {
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: center; gap: 8px;
+  }
+  .gauge-ring {
+    position: relative;
+    width: 90px; height: 90px;
+  }
+  .gauge-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge-ring circle {
+    fill: none; stroke-width: 6; stroke-linecap: round;
+  }
+  .gauge-ring .bg { stroke: rgba(255,255,255,0.06); }
+  .gauge-ring .fill { transition: stroke-dashoffset 1s ease; }
+  .gauge-pct {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .gauge-name { font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── Big Metric ── */
+  .big-metric { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .big-metric .val {
+    font-size: 64px; font-weight: 700; letter-spacing: -2px;
+    line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .big-metric .sub { font-size: 14px; color: var(--text-2); margin-top: 8px; }
+  .big-metric .trend {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; font-weight: 600; margin-top: 12px;
+    padding: 4px 10px; border-radius: 6px;
+  }
+  .trend-up { color: var(--green); background: rgba(34,197,94,0.1); }
+  .trend-down { color: var(--red); background: rgba(239,68,68,0.1); }
+
+  /* ── Activity Sparkline ── */
+  .spark-row {
+    display: flex; align-items: flex-end; gap: 3px;
+    height: 50px; margin-top: auto;
+  }
+  .spark-row .bar {
+    flex: 1; border-radius: 2px;
+    transition: height 0.8s ease;
+    min-height: 3px;
+  }
+
+  /* ── Services ── */
+  .svc-list { display: flex; flex-direction: column; gap: 2px; }
+  .svc {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 14px; transition: background 0.2s;
+  }
+  .svc:hover { background: var(--surface-hover); }
+  .svc-left { display: flex; align-items: center; gap: 10px; }
+  .svc-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .svc-name { font-weight: 500; }
+  .svc-detail { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+  /* ── Agent Feed ── */
+  .feed { flex: 1; display: flex; flex-direction: column; gap: 0; overflow: hidden; }
+  .feed-item {
+    display: flex; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .feed-avatar {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .feed-body { flex: 1; min-width: 0; }
+  .feed-title { font-size: 13px; font-weight: 500; line-height: 1.4; }
+  .feed-time { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+
+  /* ── Clock panel ── */
+  .clock-panel { justify-content: center; align-items: center; text-align: center; }
+  .clock-big {
+    font-size: 80px; font-weight: 200; letter-spacing: -3px;
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .clock-date {
+    font-size: 16px; color: var(--text-2); margin-top: 8px;
+    font-weight: 400;
+  }
+  .clock-greeting {
+    font-size: 22px; font-weight: 300; color: rgba(255,255,255,0.7);
+    margin-top: 20px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    font-size: 11px; color: var(--text-2);
+  }
+  .footer-nodes { display: flex; gap: 16px; }
+  .footer-node { display: flex; align-items: center; gap: 6px; }
+  .footer-node .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Ambient glow */
+  .glow {
+    position: fixed; pointer-events: none; border-radius: 50%;
+    animation: drift 25s ease-in-out infinite;
+  }
+  .g1 { width: 500px; height: 500px; top: -200px; right: -150px;
+    background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%); }
+  .g2 { width: 400px; height: 400px; bottom: -150px; left: -100px;
+    background: radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 70%);
+    animation-delay: -12s; }
+  @keyframes drift {
+    0%,100% { transform: translate(0,0); }
+    33% { transform: translate(-20px,15px); }
+    66% { transform: translate(15px,-20px); }
+  }
+</style>
+</head>
+<body>
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+
+<div class="shell">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo"><span>▲</span> Stratus Labs</div>
+      <div class="divider"></div>
+      <div class="label">Command Center</div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="hdrClock"></div>
+      <div class="pulse"></div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="content">
+    <!-- Panel 1: System Gauges -->
+    <div class="panel">
+      <div class="panel-label">System</div>
+      <div class="gauges">
+        <div class="gauge">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="42"/>
+              <circle class="fill" id="gCpu" cx="50" cy="50" r="42"
+                stroke="var(--blue)" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="gauge-pct" id="gCpuPct">0%</div>
+          </div>
+          <div class="gauge-name">CPU</div>
+        </div>
+        <div class="gauge">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="42"/>
+              <circle class="fill" id="gMem" cx="50" cy="50" r="42"
+                stroke="var(--accent)" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="gauge-pct" id="gMemPct">0%</div>
+          </div>
+          <div class="gauge-name">Memory</div>
+        </div>
+        <div class="gauge">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="42"/>
+              <circle class="fill" id="gDisk" cx="50" cy="50" r="42"
+                stroke="var(--amber)" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="gauge-pct" id="gDiskPct">0%</div>
+          </div>
+          <div class="gauge-name">Disk</div>
+        </div>
+        <div class="gauge">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="42"/>
+              <circle class="fill" id="gLoad" cx="50" cy="50" r="42"
+                stroke="var(--green)" stroke-dasharray="263.9" stroke-dashoffset="263.9"/>
+            </svg>
+            <div class="gauge-pct" id="gLoadPct">0</div>
+          </div>
+          <div class="gauge-name">Load</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Uptime -->
+    <div class="panel">
+      <div class="panel-label">Uptime</div>
+      <div class="big-metric">
+        <div class="val" id="uptimeVal">2d 17h</div>
+        <div class="sub" id="uptimeSub">since last restart</div>
+        <div class="trend trend-up">↑ 99.8% · 30d</div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Processes -->
+    <div class="panel">
+      <div class="panel-label">Processes</div>
+      <div class="big-metric">
+        <div class="val" id="procCount">687</div>
+        <div class="sub">running processes</div>
+      </div>
+      <div class="spark-row" id="procSpark"></div>
+    </div>
+
+    <!-- Panel 4: Agent Activity (spans right column, both rows) -->
+    <div class="panel" style="grid-row: 1 / 3;">
+      <div class="panel-label">Agent Activity</div>
+      <div class="feed" id="agentFeed"></div>
+    </div>
+
+    <!-- Panel 5: Services -->
+    <div class="panel">
+      <div class="panel-label">Services</div>
+      <div class="svc-list" id="svcList"></div>
+    </div>
+
+    <!-- Panel 6: Clock -->
+    <div class="panel clock-panel" style="grid-column: 2 / 4;">
+      <div class="clock-big" id="clockBig"></div>
+      <div class="clock-date" id="clockDate"></div>
+      <div class="clock-greeting" id="clockGreeting"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-nodes">
+      <div class="footer-node"><span class="dot" style="background:var(--green)"></span> Mac mini</div>
+      <div class="footer-node"><span class="dot" style="background:var(--amber)"></span> Canvas</div>
+    </div>
+    <span>Generative UI · Built by Remy at 2:00 AM</span>
+  </div>
+</div>
+
+<script>
+// ── Data (injected by agent, or simulated) ──
+const SYSTEM = {
+  cpu: 10, mem: 65, disk: 20, load: 1.41,
+  uptime: '2d 17h', processes: 687
+};
+
+const SERVICES = [
+  { name: 'OpenClaw Gateway', status: 'ok', detail: 'Port 18789' },
+  { name: 'Telegram Bot', status: 'ok', detail: 'Connected' },
+  { name: 'Canvas Node', status: 'warn', detail: 'Mac mini' },
+  { name: 'Cron Scheduler', status: 'ok', detail: '3 active' },
+  { name: 'GitHub Actions', status: 'ok', detail: 'All green' },
+];
+
+const AGENT_EVENTS = [
+  { agent: 'R', name: 'Remy', color: 'var(--accent)', action: 'Night build: generative UI prototype', time: '2:00 AM' },
+  { agent: 'O', name: 'Otto', color: 'var(--blue)', action: 'Monitoring system health', time: '1:45 AM' },
+  { agent: 'R', name: 'Remy', color: 'var(--accent)', action: 'Pushed generative-ui skill to skills repo', time: '1:30 AM' },
+  { agent: 'S', name: 'Scout', color: 'var(--green)', action: 'Completed daily HN scan', time: '12:00 AM' },
+  { agent: 'R', name: 'Remy', color: 'var(--accent)', action: 'Built 3 canvas templates', time: '11:30 PM' },
+  { agent: 'O', name: 'Otto', color: 'var(--blue)', action: 'Ran scheduled backup', time: '11:00 PM' },
+  { agent: 'R', name: 'Remy', color: 'var(--accent)', action: 'Deployed Director Phase 4 polish', time: '10:15 PM' },
+  { agent: 'S', name: 'Scout', color: 'var(--green)', action: 'Found 2 trending AI repos', time: '9:00 PM' },
+];
+
+// ── Render ──
+function setGauge(id, pctId, value, max) {
+  const pct = Math.min(value / max * 100, 100);
+  const circ = 263.9;
+  document.getElementById(id).style.strokeDashoffset = circ * (1 - pct / 100);
+  document.getElementById(pctId).textContent = typeof value === 'number' && max === 100 ? value + '%' : value.toFixed ? value.toFixed(1) : value;
+}
+
+function renderServices() {
+  document.getElementById('svcList').innerHTML = SERVICES.map(s => {
+    const color = s.status === 'ok' ? 'var(--green)' : s.status === 'warn' ? 'var(--amber)' : 'var(--red)';
+    return `<div class="svc">
+      <div class="svc-left"><span class="svc-dot" style="background:${color}"></span><span class="svc-name">${s.name}</span></div>
+      <span class="svc-detail">${s.detail}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderFeed() {
+  document.getElementById('agentFeed').innerHTML = AGENT_EVENTS.map(e =>
+    `<div class="feed-item">
+      <div class="feed-avatar" style="background:${e.color};color:#fff">${e.agent}</div>
+      <div class="feed-body">
+        <div class="feed-title"><strong>${e.name}</strong> — ${e.action}</div>
+        <div class="feed-time">${e.time}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function buildSparkline() {
+  const el = document.getElementById('procSpark');
+  el.innerHTML = '';
+  const colors = ['var(--accent)', 'var(--blue)', 'var(--green)'];
+  for (let i = 0; i < 24; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = (15 + Math.random() * 85) + '%';
+    bar.style.background = colors[i % 3];
+    bar.style.opacity = 0.5;
+    el.appendChild(bar);
+  }
+}
+
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  const pad = n => String(n).padStart(2, '0');
+
+  document.getElementById('hdrClock').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  document.getElementById('clockBig').textContent = `${pad(h)}:${pad(m)}`;
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  const greetings = h < 5 ? 'Late night build mode 🌙' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('clockGreeting').textContent = greetings;
+}
+
+// ── Init ──
+setGauge('gCpu', 'gCpuPct', SYSTEM.cpu, 100);
+setGauge('gMem', 'gMemPct', SYSTEM.mem, 100);
+setGauge('gDisk', 'gDiskPct', SYSTEM.disk, 100);
+setGauge('gLoad', 'gLoadPct', SYSTEM.load, 8);
+document.getElementById('uptimeVal').textContent = SYSTEM.uptime;
+document.getElementById('procCount').textContent = SYSTEM.processes;
+renderServices();
+renderFeed();
+buildSparkline();
+updateClock();
+setInterval(updateClock, 1000);
+
+// Simulate slight metric drift
+setInterval(() => {
+  SYSTEM.cpu = Math.max(1, Math.min(99, SYSTEM.cpu + (Math.random() - 0.5) * 6));
+  SYSTEM.mem = Math.max(30, Math.min(95, SYSTEM.mem + (Math.random() - 0.5) * 2));
+  setGauge('gCpu', 'gCpuPct', Math.round(SYSTEM.cpu), 100);
+  setGauge('gMem', 'gMemPct', Math.round(SYSTEM.mem), 100);
+  buildSparkline();
+}, 10000);
+</script>
+</body>
+</html>
