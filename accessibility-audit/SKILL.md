@@ -24,35 +24,48 @@ A browser automation tool — Playwright, Puppeteer, or an agent browser tool �
 
 ## 1. Automated Scan
 
-Inject axe-core and run it:
+Inject axe-core, **waiting on the load event** rather than a fixed delay:
 
 ```javascript
-// Inject from CDN
-const script = document.createElement('script');
-script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js';
-document.head.appendChild(script);
+await new Promise((resolve, reject) => {
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js';
+  script.onload = resolve;
+  script.onerror = () => reject(new Error('axe-core failed to load'));
+  document.head.appendChild(script);
+});
 ```
 
-Wait for load (~2s), then run and extract:
+A `setTimeout` guess fails two ways: a slow CDN response means `axe` is still undefined when you call it, and a page with a restrictive `script-src` CSP blocks the injection entirely while the timer still elapses. Both produce a silent empty scan that reads as a clean page.
+
+**If injection is blocked by CSP**, don't report a pass. Either inject axe-core's source directly through the automation tool (Playwright's `addInitScript`, or evaluating the library source as a string), or report the automated half as unavailable and run the manual protocol alone.
+
+Then run it, **scoped to the standard you're reporting against**:
 
 ```javascript
-const r = await axe.run();
+const r = await axe.run({ runOnly: { type: 'tag', values: ['wcag2a','wcag2aa','wcag21a','wcag21aa'] } });
+
+const summarize = items => items.map(v => ({
+  id: v.id,
+  impact: v.impact,                 // critical | serious | moderate | minor
+  description: v.description,
+  helpUrl: v.helpUrl,
+  nodes: v.nodes.length,
+  targets: v.nodes.slice(0, 3).map(n => n.target.join(' '))
+}));
+
 JSON.stringify({
   violations: r.violations.length,
   passes: r.passes.length,
   incomplete: r.incomplete.length,
-  details: r.violations.map(v => ({
-    id: v.id,
-    impact: v.impact,                 // critical | serious | moderate | minor
-    description: v.description,
-    helpUrl: v.helpUrl,
-    nodes: v.nodes.length,
-    targets: v.nodes.slice(0, 3).map(n => n.target.join(' '))
-  }))
+  details: summarize(r.violations),
+  needsReview: summarize(r.incomplete)
 });
 ```
 
-`incomplete` matters as much as `violations` — those are checks axe couldn't decide, and they need a human eye. Don't report them as passes.
+**Why `runOnly`:** bare `axe.run()` executes every enabled rule, including `best-practice` and newer-standard rules that are *not* WCAG 2.1 AA requirements. Reporting those under a heading that says "Standard: WCAG 2.1 AA" tells someone they fail a standard they don't fail. Scope to the tags, or label each finding with its ruleset.
+
+**Why `needsReview` is serialized in full:** `incomplete` is checks axe could not decide, and the report below requires listing each one with what to check. A bare count can't populate that section — in browser automation this JSON is usually the only thing that survives the evaluate call. Never fold these into the pass count.
 
 ---
 
@@ -83,11 +96,15 @@ const s = getComputedStyle(el);
 // Missing alt entirely
 document.querySelectorAll('img:not([alt])').length;
 
-// Present but useless
-[...document.querySelectorAll('img[alt]')].filter(i =>
-  ['image','photo','picture','icon','logo',''].includes(i.alt.trim().toLowerCase())
-  || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(i.alt.trim())
-).map(i => ({ src: i.src.slice(-40), alt: i.alt }));
+// Present but uninformative. Note: alt="" is EXCLUDED — it is the correct
+// markup for decorative images, and flagging it produces false positives
+// on exactly the pages that got it right.
+[...document.querySelectorAll('img[alt]')].filter(i => {
+  const alt = i.alt.trim();
+  if (alt === '') return false;                       // decorative, correct
+  return ['image','photo','picture','icon','logo','graphic'].includes(alt.toLowerCase())
+    || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(alt);
+}).map(i => ({ src: i.src.slice(-40), alt: i.alt }));
 ```
 
 ### Keyboard Navigation
@@ -117,10 +134,12 @@ Positive `tabindex` values (> 0) are almost always a bug — they override docum
 
 ### Headings & Landmarks
 
-- [ ] Exactly one `<h1>`
-- [ ] No skipped levels (h1 → h3)
-- [ ] Headings describe structure, not styling
-- [ ] Landmarks present: `<nav>`, `<main>`, `<aside>`, `<footer>`
+**These are best practices, not WCAG 2.1 AA conformance criteria.** WCAG requires that headings and labels be descriptive (2.4.6, AA) and that structure be programmatically determinable (1.3.1, A) — it does not mandate exactly one `<h1>`, strictly sequential ranks, or any particular landmark. Report findings here as structural recommendations, not as failures of the standard, or the audit claims violations that don't exist.
+
+- [ ] One `<h1>` in most cases — multiple can be legitimate on pages with genuinely parallel top-level sections
+- [ ] Ranks generally sequential — a deliberate skip with sound structure is not automatically a defect
+- [ ] Headings describe content, not styling *(this one does map to WCAG 2.4.6)*
+- [ ] Landmarks used where the regions exist: `<nav>`, `<main>`, `<aside>`, `<footer>`
 
 ```javascript
 // Hierarchy, with skip detection
@@ -175,14 +194,18 @@ The first rule of ARIA is not to use ARIA: a native `<button>` beats `role="butt
 
 ## 3. Severity
 
-| Level | Impact | WCAG | Examples |
-|-------|--------|------|----------|
-| **Critical** | Blocks access entirely | A | Missing alt on content images, keyboard trap, modal with no focus management |
-| **Serious** | Major barrier | A/AA | Low-contrast text, unlabeled form fields, no skip link |
-| **Moderate** | Degraded experience | AA | Broken heading hierarchy, missing landmarks, "click here" link text |
-| **Minor** | Inconvenience | AAA | Weak alt text, low contrast on decorative elements |
+Severity measures **user impact**. It is not the same axis as WCAG conformance level, and collapsing the two misreports both — a weak text alternative is low-impact but can fail Level A, while many AAA items block nobody.
 
-Map axe's own `impact` field onto this directly — it uses the same four words.
+| Level | Impact | Examples |
+|-------|--------|----------|
+| **Critical** | Blocks access entirely | Missing alt on content images, keyboard trap, modal with no focus management |
+| **Serious** | Major barrier | Low-contrast text, unlabeled form fields, no skip link |
+| **Moderate** | Degraded experience | Non-descriptive link text ("click here"), confusing heading structure |
+| **Minor** | Inconvenience | Alt text that is accurate but unhelpfully terse |
+
+Cite the specific success criterion per finding (e.g. *1.1.1 Non-text Content, Level A*) rather than inferring a level from severity. axe's own `impact` field uses these same four words and maps directly.
+
+Two things that are **not** failures: decorative images with `alt=""`, and contrast on purely decorative elements — decorative content is exempt from contrast requirements, not an AAA-level failure.
 
 ---
 
