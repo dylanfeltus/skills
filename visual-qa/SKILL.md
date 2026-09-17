@@ -15,6 +15,15 @@ Use vision models to self-review screenshots against design intent. Catch spacin
 - User asks "does this look right?" or "what's off about this?"
 - Automated design QA step in a build workflow
 
+## Related Skills
+
+This skill judges what a screenshot *looks* like. Two optional companion skills in the same library cover what it can't see:
+
+- **`accessibility-audit`** — contrast ratios, keyboard order, ARIA, screen-reader structure. A page can look correct and be unusable; vision review won't catch that.
+- **`web-vitals`** — load performance and layout shift. A screenshot shows the final frame, not the janky path to it.
+
+**If they're installed**, hand off findings in their territory. **If they aren't** — this skill installs standalone, so assume they may not be — report the finding here and note the limits of what a visual review established. Never drop a finding because a companion skill isn't available; an unhandled accessibility problem is worse than one reported by the wrong skill.
+
 ## Core Philosophy
 
 - **Screenshot first, then critique.** Always look at the actual rendered output, not just the code.
@@ -164,6 +173,16 @@ Analyze the screenshot against these categories (in priority order):
 - Images not overflowing containers
 - Horizontal scroll (almost always a bug)
 
+**Breakpoint boundary testing:**
+
+Media queries fire at exact pixel values, and off-by-one errors there are invisible at the usual round-number viewports. For each breakpoint the CSS defines, capture at three widths:
+
+- `width - 1px` (just below)
+- `width` (exactly at)
+- `width + 1px` (just above)
+
+The classic failure: a layout designed for 768px and up, behind a `min-width: 769px` query. At exactly 768px the page gets the mobile layout at tablet proportions — and nobody catches it, because 768px is the number everyone screenshots.
+
 ---
 
 ## Output Format
@@ -223,6 +242,47 @@ Looks good: [What's working]
 #### Matching Well
 - [Elements that accurately match the design]
 ```
+
+### Formal Report (P0–P3)
+
+For QA reports that get filed and tracked rather than read once, use priority levels instead of the 🔴/🟡/🟢 grouping above. They map to what a user can and can't do:
+
+| Level | Meaning | Test |
+|-------|---------|------|
+| **P0 — Broken** | The user cannot accomplish what they came to do | Form won't submit; nav unreachable at a breakpoint; content trapped behind an overlay; page fails to render |
+| **P1 — Degraded** | Works, but something is visibly and obviously wrong | Text overlapping text; broken image; element escaping its container |
+| **P2 — Polish** | Inconsistent with the rest of the interface | Mismatched radii or padding; off-grid spacing |
+| **P3 — Nitpick** | Cosmetic, no user impact | Sub-pixel misalignment; minor optical balance |
+
+```markdown
+# Visual QA Report — [Site] — [date]
+**URL:** [url] · **Viewports:** 375 · 768 · 1280 · 1440
+**Findings:** P0: _ · P1: _ · P2: _ · P3: _
+
+## P0 — Broken
+### [Title]
+- **Viewport:** [width]
+- **Location:** [section / component]
+- **What's wrong:** [why it blocks the user]
+- **Repro:** [steps]
+- **Suggestion:** [direction, not prescribed code]
+
+## P1 — Degraded
+[same shape]
+
+## P2 — Polish
+[description + viewport only]
+
+## P3 — Nitpick
+[description + viewport only]
+
+## Re-check Queue
+| Finding | Reported | Status |
+|---------|----------|--------|
+| [title] | [date] | awaiting-fix / awaiting-recheck / verified-fixed |
+```
+
+The re-check queue is what makes a report a process rather than a one-off — findings stay tracked until verified fixed.
 
 ---
 

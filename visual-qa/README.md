@@ -11,6 +11,8 @@ Copy the `visual-qa` folder into your agent's skills directory.
 - **7 review categories** in priority order: layout, typography, color, hierarchy, components, polish, responsive
 - **Structured output formats** for full reviews, quick reviews, and mockup comparisons
 - **Vision model prompts** tuned for different review types
+- **Breakpoint boundary testing** — capture at width-1 / width / width+1 to catch off-by-one media queries
+- **Two report formats** — a quick 🔴/🟡/🟢 review, and a trackable P0–P3 report with a re-check queue
 - **Build workflow integration** — when and how to run QA during development
 
 ## Usage Examples
