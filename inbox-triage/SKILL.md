@@ -100,11 +100,18 @@ reply_style:
   signoff: "Best, [Name]"
   apologize_for_delay: false
 digest_time: "08:00"
-alert_hours: "08:00-22:00"   # urgent alerts outside these hours wait
+alert_hours: "08:00-22:00"   # see quiet-hours exception below
+always_alert:                # these wake the user regardless of alert_hours
+  - security
+  - account_compromise
 timezone: America/New_York
 ```
 
 Without a VIP list, sender-based urgency is guesswork. Ask for it on first run.
+
+**Quiet hours do not apply to everything.** `alert_hours` defers the *notification* for ordinary urgent mail — a client deadline at 23:00 can reasonably wait for 08:00. It must never defer a security alert or an unrequested password reset. Those are in `always_alert` and interrupt at any hour, because a ten-hour delay on an account compromise is the whole cost of the incident.
+
+Mail deferred by quiet hours still appears at the top of the next digest, marked as having arrived overnight.
 
 ---
 
@@ -145,7 +152,7 @@ Cold outreach · marketing from companies they've never dealt with · spam that 
 ### Decision order
 
 ```
-1. VIP sender?              → read content, likely 🔴 or 🟡
+1. VIP sender?              → 🔴 (that's what the VIP list means)
 2. Deadline within 48h?     → 🔴
 3. Asks the user directly?  → 🟡
 4. Informational only?      → 🔵
@@ -187,8 +194,11 @@ When a classification is genuinely uncertain, mark it rather than hiding it:
 
 ```
 [🟡→🔴?] New sender, contract language, no established relationship.
-         Filed 🟡, flagging — correct me and I'll remember the pattern.
+         Filed 🔴 per the escalate-when-unsure rule, flagging the doubt —
+         correct me and I'll remember the pattern.
 ```
+
+Note the direction: the uncertainty marker records what it *might* have been, but the message is filed at the **higher** level. Hard rule 7 exists because the two errors aren't symmetric — a wrongly-urgent message costs a moment's attention, a wrongly-deferred one can cost the thing itself.
 
 Record corrections the user makes so the same sender or pattern classifies right next time.
 
