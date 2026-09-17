@@ -17,12 +17,12 @@ Use vision models to self-review screenshots against design intent. Catch spacin
 
 ## Related Skills
 
-This skill judges what a screenshot *looks* like. Two neighbours cover what it can't see:
+This skill judges what a screenshot *looks* like. Two optional companion skills in the same library cover what it can't see:
 
 - **`accessibility-audit`** — contrast ratios, keyboard order, ARIA, screen-reader structure. A page can look correct and be unusable; vision review won't catch that.
 - **`web-vitals`** — load performance and layout shift. A screenshot shows the final frame, not the janky path to it.
 
-Hand off when a review turns up something in their territory.
+**If they're installed**, hand off findings in their territory. **If they aren't** — this skill installs standalone, so assume they may not be — report the finding here and note the limits of what a visual review established. Never drop a finding because a companion skill isn't available; an unhandled accessibility problem is worse than one reported by the wrong skill.
 
 ## Core Philosophy
 
@@ -270,7 +270,10 @@ For QA reports that get filed and tracked rather than read once, use priority le
 ## P1 — Degraded
 [same shape]
 
-## P2 — Polish / ## P3 — Nitpick
+## P2 — Polish
+[description + viewport only]
+
+## P3 — Nitpick
 [description + viewport only]
 
 ## Re-check Queue
