@@ -42,11 +42,22 @@ new PerformanceObserver(list => {
   window.__lcp = entries[entries.length - 1].startTime;
 }).observe({ type: 'largest-contentful-paint', buffered: true });
 
-// CLS — Cumulative Layout Shift (sum of shifts without recent input)
-let cls = 0;
+// CLS — largest session window, NOT a running total.
+// A session window ends after a 1s gap between shifts, or at 5s total.
+// CLS is the maximum window score, so isolated small shifts across a long
+// page do not accumulate into a failing grade the user never experienced.
+let cls = 0, cur = 0, first = 0, last = 0;
 new PerformanceObserver(list => {
-  for (const e of list.getEntries()) if (!e.hadRecentInput) cls += e.value;
-  window.__cls = cls;
+  for (const e of list.getEntries()) {
+    if (e.hadRecentInput) continue;
+    if (cur && (e.startTime - last > 1000 || e.startTime - first > 5000)) {
+      cls = Math.max(cls, cur); cur = 0;
+    }
+    if (!cur) first = e.startTime;
+    last = e.startTime;
+    cur += e.value;
+  }
+  window.__cls = Math.max(cls, cur);
 }).observe({ type: 'layout-shift', buffered: true });
 
 // INP proxy — worst observed interaction latency.
@@ -95,18 +106,27 @@ const paint = performance.getEntriesByType('paint');
 
 ## 3. Resources & Render Blocking
 
+**Before trusting any byte count here:** `transferSize` is reported as `0` for cached resources *and* for cross-origin resources that don't send `Timing-Allow-Origin`. That's most CDN and third-party assets. Taken at face value, a 2MB third-party script ranks below a 4KB local one. Fall back to `decodedBodySize`, and track how much of the total is unmeasurable:
+
 ```javascript
 const res = performance.getEntriesByType('resource');
 const by = t => res.filter(r => r.initiatorType === t);
-const kb = rs => Math.round(rs.reduce((s, r) => s + (r.transferSize || 0), 0) / 1024);
+
+// transferSize || decodedBodySize; 0 from both means genuinely unknown
+const size = r => r.transferSize || r.decodedBodySize || 0;
+const kb = rs => Math.round(rs.reduce((s, r) => s + size(r), 0) / 1024);
+const isFont = r => /\.(woff2?|ttf|otf|eot)(\?|$)/i.test(r.name) || r.initiatorType === 'font';
+const opaque = res.filter(r => !r.transferSize && !r.decodedBodySize);
 
 ({
   total: res.length,
   weightKB: kb(res),
+  unmeasured: opaque.length,   // cached or cross-origin without Timing-Allow-Origin
+  unmeasuredHosts: [...new Set(opaque.map(r => { try { return new URL(r.name).host } catch { return '?' } }))].slice(0,5),
   scripts: { n: by('script').length, kb: kb(by('script')) },
   css:     { n: by('link').length,   kb: kb(by('link')) },
   images:  { n: by('img').length,    kb: kb(by('img')) },
-  fonts:   { n: by('css').length,    kb: kb(res.filter(r => /\.(woff2?|ttf|otf)/.test(r.name))) },
+  fonts:   { n: res.filter(isFont).length, kb: kb(res.filter(isFont)) },
 
   // Render blocking
   syncScripts: document.querySelectorAll(
@@ -126,18 +146,28 @@ const kb = rs => Math.round(rs.reduce((s, r) => s + (r.transferSize || 0), 0) / 
   viewport: !!document.querySelector('meta[name="viewport"]'),
 
   // Heaviest individual resources — usually where the win is
-  top: res.map(r => ({ url: r.name.split('/').pop().slice(0,50), kb: Math.round((r.transferSize||0)/1024) }))
-          .sort((a,b) => b.kb - a.kb).slice(0, 10)
+  top: res.map(r => ({
+        url: r.name.split('/').pop().slice(0,50),
+        kb: Math.round(size(r)/1024),
+        measured: !!(r.transferSize || r.decodedBodySize)
+      }))
+      .sort((a,b) => b.kb - a.kb).slice(0, 10)
 });
 ```
+
+If `unmeasured` is more than a handful, say so in the report rather than presenting the weight total as complete. For real numbers on those, read response sizes from the automation tool's network layer (Playwright's `response.body()`, or a CDP `Network.responseReceived` listener) instead of Resource Timing.
 
 Also check for the classic CLS cause — images without reserved space:
 
 ```javascript
-[...document.querySelectorAll('img')].filter(i =>
-  !i.getAttribute('width') && !i.getAttribute('height')
-  && !i.style.aspectRatio && !getComputedStyle(i).aspectRatio.includes('/')
-).length;
+// EITHER dimension missing leaves the box unreserved: one alone doesn't
+// establish the aspect ratio before the image loads.
+[...document.querySelectorAll('img')].filter(i => {
+  const hasBoth = i.getAttribute('width') && i.getAttribute('height');
+  const ratio = i.style.aspectRatio || getComputedStyle(i).aspectRatio;
+  const hasRatio = ratio && ratio !== 'auto';
+  return !hasBoth && !hasRatio;
+}).map(i => i.currentSrc || i.src);
 ```
 
 ---
