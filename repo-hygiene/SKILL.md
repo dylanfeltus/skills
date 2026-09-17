@@ -52,11 +52,14 @@ A branch is stale when **all** of these hold:
 
 ```bash
 git fetch --prune
-for b in $(git branch -r --format='%(refname:short)' | grep -v "origin/$DEFAULT$"); do
-  last=$(git log -1 --format=%ci "$b")
-  age=$(( ( $(date +%s) - $(git log -1 --format=%ct "$b") ) / 86400 ))
-  echo "$age days | $last | $b"
-done | sort -rn
+# %(symref) is non-empty for origin/HEAD -- exclude it. It is not a branch,
+# but it resolves to the default branch, so it would sail through the
+# unmerged-commit gate below and get reported as safe to delete.
+git for-each-ref --format='%(refname:short) %(symref)' refs/remotes/origin   | awk '$2 == "" {print $1}'   | grep -v "^origin/$DEFAULT$"   | while read -r b; do
+      last=$(git log -1 --format=%ci "$b")
+      age=$(( ( $(date +%s) - $(git log -1 --format=%ct "$b") ) / 86400 ))
+      echo "$age days | $last | $b"
+    done | sort -rn
 ```
 
 ### The check that matters
@@ -97,9 +100,20 @@ Flag violations. Never rename — that breaks other people's checkouts.
 No activity — comments, commits, reviews — in N days (default 14), and CI is not pending.
 
 ```bash
-gh pr list --state open --json number,title,author,updatedAt,isDraft,reviewDecision,mergeable \
-  --limit 100 --jq '.[] | "\(.number)\t\(.updatedAt[:10])\t\(.reviewDecision // "none")\t\(.title[:50])"'
+gh pr list --state open --limit 100 \
+  --json number,title,author,updatedAt,isDraft,reviewDecision,mergeable,statusCheckRollup \
+  --jq '.[] | {
+    n: .number, updated: .updatedAt[:10], review: (.reviewDecision // "none"),
+    mergeable: .mergeable, draft: .isDraft,
+    ci: ([.statusCheckRollup[]? | .conclusion // .state]
+         | if length == 0 then "none"
+           elif any(. == "FAILURE" or . == "TIMED_OUT" or . == "CANCELLED") then "failing"
+           elif any(. == "PENDING" or . == "IN_PROGRESS" or . == null) then "pending"
+           else "passing" end),
+    title: .title[:50] }'
 ```
+
+`statusCheckRollup` is required, not optional. Without it neither `reviewDecision` nor `mergeable` tells you whether CI is green — so you cannot apply the "CI is not pending" staleness condition, and you cannot tell **Ready** (approved + green) from an approved PR sitting on a red build. Those need opposite actions.
 
 ### Triage matrix
 
@@ -133,9 +147,17 @@ Automated hygiene check.
 **Flag only. Never close.** An issue open 18 months might still be valid — it's accumulating guilt, not necessarily obsolescence, and that distinction is the maintainer's to make.
 
 ```bash
-gh issue list --state open --json number,title,updatedAt,assignees,labels,milestone \
-  --limit 100 --jq '.[] | select(.updatedAt < "'"$(date -d '90 days ago' +%Y-%m-%d)"'")'
+# Portable 90-day cutoff: GNU date uses -d, BSD/macOS uses -v
+CUTOFF=$(date -u -d '90 days ago' +%Y-%m-%d 2>/dev/null       || date -u -v-90d +%Y-%m-%d 2>/dev/null)   || { echo "could not compute cutoff date" >&2; exit 1; }
+
+# --limit caps the fetch; pass a bound above the open-issue count so the
+# audit covers the whole repo. Totals reported from a truncated fetch are
+# wrong in a way nobody can see.
+OPEN=$(gh issue list --state open --limit 1000 --json number --jq 'length')
+gh issue list --state open --limit "$((OPEN > 0 ? OPEN : 1))"   --json number,title,updatedAt,assignees,labels,milestone   --jq --arg cutoff "$CUTOFF" '.[] | select(.updatedAt[:10] < $cutoff)'
 ```
+
+Two failure modes this avoids: `date -d` doesn't exist on macOS, where the substitution fails and leaves an empty cutoff — every issue then compares as stale or none do, silently. And a repo with more than the fetched limit audits a subset while the report still presents repo-wide totals.
 
 | Status | Recommendation |
 |--------|---------------|
